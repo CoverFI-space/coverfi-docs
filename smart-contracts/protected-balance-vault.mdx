@@ -1,0 +1,13 @@
+---
+title: "Protected Balance Vault"
+description: "Custodial contract for user principal"
+---
+
+The `protected_balance_vault` acts as a secure custody layer for the principal stablecoins deposited by users when opening a protection position.
+
+## Core Responsibilities
+
+- **Secure Custody**: Holds the principal collateral during the duration of an active position.
+- **Engine Exclusivity**: Only the authorized `protection_engine` is permitted to instruct this vault to move funds.
+
+During position expiration or revocation, the `protection_engine` directs this vault to return the funds directly to the user's wallet.

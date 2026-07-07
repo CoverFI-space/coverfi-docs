@@ -1,0 +1,62 @@
+---
+title: "CoverFi AI"
+description: "AI chat, research mode, market context, and payment drafts"
+---
+
+CoverFi AI is the assistant inside the authenticated dashboard. The sidebar and page title use **CoverFi AI**.
+
+## What CoverFi AI knows
+
+The backend system prompt tells the model that the website and product name is CoverFi. It also receives structured user context from the app when available:
+
+- Wallet address
+- Username
+- Network
+- Profile details
+- Protection positions
+- Portfolio context
+
+CoverFi AI should separate known account data from general guidance and avoid inventing wallet addresses, balances, contract addresses, or transaction hashes.
+
+## Modes and models
+
+The chat UI provides two modes:
+
+| Mode | Purpose | Model options |
+| --- | --- | --- |
+| General | Product help, app guidance, and normal chat | `deepseek-chat`, `deepseek-reasoner` |
+| Research | Broader comparison and research style answers | `deepseek-research`, `deepseek-reasoner` |
+
+When **Research** is selected, the app sends `mode: "research"` and the selected research model to the backend.
+
+## Live market context
+
+Before generating a response, the backend attempts to fetch current market data from CoinGecko. That context is passed into the model so the assistant can discuss live prices and recent market movement.
+
+If live prices are unavailable, the API still answers and includes a market-context error in the response.
+
+## Payment drafts
+
+CoverFi AI can prepare payment drafts when the user writes a payment intent such as:
+
+```txt
+Send 11 XLM to @username
+```
+
+The app then:
+
+1. Parses the amount, asset, and recipient username.
+2. Looks up the username in Firebase.
+3. Creates a Markdown-formatted private draft.
+4. Shows recipient wallet, processing fee, total amount, and sender wallet.
+5. Lets the user copy the draft.
+
+CoverFi AI does not execute payments. The user must review and sign from their wallet.
+
+## Chat input behavior
+
+- Press **Enter** to submit.
+- Press **Shift + Enter** for a new line.
+- The composer stays fixed at the bottom of the chat view.
+- The textarea is vertically centered, capped at three visible lines, and does not show an internal scrollbar.
+- AI messages use the CoverFi logo instead of a generic robot icon.

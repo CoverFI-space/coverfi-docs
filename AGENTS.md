@@ -1,33 +1,34 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
 # Documentation project instructions
 
 ## About this project
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
+- This is the Mintlify documentation site for CoverFi.
+- CoverFi is an open-source Stellar stablecoin protection dashboard.
+- Use "CoverFi" for the product and website name.
+- Use "CoverFi AI" for the assistant.
+- Pages are MDX files with YAML frontmatter.
+- Navigation and site settings live in `docs.json`.
 
-## Terminology
+## Product terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+- Use "landing site" for `mian-page`.
+- Use "app" or "authenticated app" for `logic-pages`.
+- Use "backend" or "API" for `server`.
+- Use "protection position" for a user's stablecoin protection record.
+- Use "payment draft" for AI-generated payment instructions. Do not call it an executed payment or receipt.
+- Use "Research mode" for CoverFi AI responses using the research model path.
 
 ## Style preferences
 
-{/* Add any project-specific style rules below */}
-
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+- Use active voice and second person.
+- Keep sentences concise.
+- Use sentence case for headings.
+- Bold UI labels, for example **CoverFi AI**.
+- Code-format file names, commands, paths, routes, environment variables, and model names.
+- Keep security boundaries clear: CoverFi AI can draft guidance, but wallet signing is always user-controlled.
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- Do not document unfinished features as production-ready.
+- Do not invent contract addresses, wallet addresses, repository URLs, or deployment hosts.
+- If a setting is environment-specific, describe the variable and give safe placeholder values.

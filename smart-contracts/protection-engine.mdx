@@ -1,0 +1,27 @@
+---
+title: "Protection Engine"
+description: "Core logic controller for protection positions"
+---
+
+The `protection_engine` is the central coordinator of the CoverFi ecosystem. It interfaces with users and manages the lifecycle of stablecoin loss protection positions.
+
+## Core Responsibilities
+
+- **Position Lifecycle**: Opens, claims, revokes, and expires positions.
+- **Math & Calculations**: Computes protection fees and max payout capacities based on configured parameters.
+- **Cross-Contract Coordination**: Triggers transfers across the `protected_balance_vault`, `premium_vault`, and `reserve_vault`.
+- **Oracle Verification**: Reads from the `oracle_adapter` during a claim to determine if the trigger threshold has been breached.
+
+## Key Functions
+
+### `create_position()`
+Opens a new protection position, calculates fees, and moves funds from the user to the respective vaults.
+
+### `claim_position()`
+Checks the current oracle price against the position's trigger price. If the condition is met, it triggers a payout from the reserve vault to the user.
+
+### `expire_position()`
+Returns the protected principal back to the user if the duration ends without a price trigger.
+
+### `revoke_position()`
+Allows early cancellation of a position under specific protocol-defined conditions.

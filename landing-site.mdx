@@ -1,0 +1,49 @@
+---
+title: "Landing site"
+description: "The public CoverFi website at coverfi.space"
+---
+
+The `mian-page` workspace powers the public CoverFi website. It is a React/Vite app focused on explaining the product and sending users into the authenticated app.
+
+## Main sections
+
+- Hero section with CoverFi positioning
+- Open-source signal and **⭐ Star on GitHub** call to action
+- Pricing section
+- FAQ section
+- Contact section
+- Footer links for app login, GitHub, and social pages
+
+## Navigation behavior
+
+The website navbar stays visible while visitors scroll. On mobile, the navigation collapses into a menu so links and primary actions stay usable on narrow screens.
+
+The public site sends app actions to the app domain configured by `VITE_COVERFI_APP_URL`. In production this should be:
+
+```txt
+https://app.coverfi.space
+```
+
+Examples:
+
+- `Create protection` opens `/app/protect`
+- `Portfolio` opens `/app/portfolio`
+- `Login` opens `/login`
+
+## Open-source call to action
+
+The hero now states that CoverFi is open source and includes a **⭐ Star on GitHub** button. Set the repository URL with:
+
+```txt
+VITE_COVERFI_GITHUB_URL=https://github.com/CoverFI-space/coverfi-contracts.git
+```
+
+## Mobile behavior
+
+The landing site is optimized for smaller screens with:
+
+- Responsive hero spacing and typography
+- Mobile menu controls
+- Scroll-safe footer layout
+- Sticky navbar visibility during page scroll
+- App links that remain easy to tap

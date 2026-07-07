@@ -1,0 +1,76 @@
+---
+title: "CoverFi app"
+description: "Authenticated dashboard features in the logic-pages workspace"
+---
+
+The `logic-pages` workspace powers the authenticated app at `app.coverfi.space`.
+
+## Authentication
+
+CoverFi uses wallet login. Protected app routes require a connected wallet session.
+
+If a user opens a protected route directly, CoverFi remembers the destination in the login URL:
+
+```txt
+https://app.coverfi.space/app/protect
+```
+
+Redirects to:
+
+```txt
+https://app.coverfi.space/login?next=app/protect
+```
+
+After login, the app returns the user to `/app/protect`.
+
+The login page **Home** action navigates in the same tab with browser back behavior. If there is no previous page, it falls back to the CoverFi landing site.
+
+## Dashboard pages
+
+| Page | Route | Purpose |
+| --- | --- | --- |
+| Dashboard | `/app/dashboard` | Overview of active positions, fees, claimable payouts, and expired positions. |
+| Portfolio | `/app/portfolio` | Live market view powered by CoinGecko data. |
+| Create Protection | `/app/protect` | Create a stablecoin protection position. |
+| Positions | `/app/positions` | Track, update, revoke, and review protection positions. |
+| Claims | `/app/claims` | Claim triggered payout positions. |
+| Profile | `/app/profile` | Manage account profile and username. |
+| Pay Username | `/app/pay-username` | Resolve a CoverFi username to a wallet address. |
+| CoverFi AI | `/app/ai-chat` | Ask product, portfolio, research, and payment-draft questions. |
+
+## Protection flow
+
+The protection form collects:
+
+- Asset
+- Protected amount
+- Trigger price
+- Duration
+- Current price
+
+Duration is selected through a popup so the form stays readable on desktop and mobile.
+
+When submitted, the app estimates:
+
+- Protection fee
+- Current estimated loss
+- Expiry time
+- Potential payout
+
+If Soroban configuration is present, the app can create the protection position on-chain through the configured protection engine contract.
+
+## Sidebar and layout
+
+The dashboard sidebar is fixed on desktop so it does not scroll with page content. On mobile, navigation adapts into a compact top layout.
+
+The app has been tuned for mobile with responsive grids, reduced overflow, and scroll-safe controls.
+
+## Favicon and logo
+
+The app uses the CoverFi logo from:
+
+```txt
+logic-pages/public/logo.png
+```
+
+The same image is used for the app favicon and CoverFi AI avatar.

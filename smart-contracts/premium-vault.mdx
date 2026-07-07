@@ -1,0 +1,12 @@
+---
+title: "Premium Vault"
+description: "Contract for collecting non-refundable protection fees"
+---
+
+The `premium_vault` acts as an intermediary collection pool for non-refundable fees paid by users when they purchase protection.
+
+## Core Responsibilities
+
+- **Fee Collection**: Receives the initial premium deducted from the user's total deposit.
+- **Yield Routing**: Forwards accumulated fees to the `reserve_vault` to bolster the overall payout capacity of the system.
+- **Engine Exclusivity**: Similar to other vaults, it only accepts commands routed through the `protection_engine`.

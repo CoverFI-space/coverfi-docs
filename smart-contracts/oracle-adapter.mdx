@@ -1,0 +1,20 @@
+---
+title: "Oracle Adapter"
+description: "Ingests and stores live stablecoin price feeds"
+---
+
+The `oracle_adapter` is a specialized contract responsible for managing external market data securely. The protection engine relies entirely on this data to determine if a claim is valid.
+
+## Core Responsibilities
+
+- **Price Storage**: Stores the most recent scaled price (typically up to 7 or 8 decimals) of supported assets (e.g., USDC, USDT, DAI).
+- **Admin Authentication**: Only the protocol admin or a heavily permissioned oracle bot can update the prices.
+- **Data Availability**: Exposes a secure getter function so the `protection_engine` can read the price at the exact moment a user attempts to claim a position.
+
+## Key Functions
+
+### `update_price()`
+Called by an authorized external bot or admin to feed the latest stablecoin prices into the Soroban state.
+
+### `get_price()`
+Retrieves the current scaled price for a specific asset, used during the validation phase of a claim.

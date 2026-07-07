@@ -1,0 +1,42 @@
+---
+title: "Deployment & Testing"
+description: "How to deploy and test CoverFi contracts locally and on Testnet"
+---
+
+## How to Test
+
+The repository includes a comprehensive Rust test suite. From the root of the contracts workspace:
+
+```powershell
+cargo test
+```
+
+This will run all unit and integration tests, validating the protection math, fee routing, and expiration logic.
+
+## How to Deploy
+
+To deploy the contracts to the Stellar network, clone the [coverfi-contracts repository](https://github.com/CoverFI-space/coverfi-contracts.git) and use the Soroban CLI.
+
+1. **Build the WASM contracts:**
+```powershell
+rustup target add wasm32-unknown-unknown
+cargo build --release --target wasm32-unknown-unknown
+```
+
+2. **Deploy to Testnet:**
+```powershell
+soroban contract deploy \
+  --wasm target/wasm32-unknown-unknown/release/protection_engine.wasm \
+  --source admin \
+  --network testnet
+```
+*(Repeat the deployment step for each vault and the oracle adapter, then configure their cross-contract initialization.)*
+
+## Security Notes
+
+> [!WARNING]  
+> **Audit Status**: These contracts are currently in beta and have not undergone a formal security audit. Use at your own risk.
+
+- **Oracle Dependency**: The system heavily relies on the `oracle_adapter`. If price feeds are delayed or manipulated, it could lead to improper payouts or missed claims.
+- **Reentrancy**: State changes occur before external cross-contract token transfers to prevent reentrancy attacks.
+- **Access Control**: Critical functions like `update_price` and contract upgrades are strictly protected by the admin's authentication.

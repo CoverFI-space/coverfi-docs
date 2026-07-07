@@ -1,20 +1,44 @@
 ---
 title: "Introduction"
-description: "Welcome to your project"
+description: "CoverFi is an open-source Stellar stablecoin protection dashboard"
 ---
 
-Write a short description of your product here. What it does, who it's for, and what they can accomplish with it.
+CoverFi helps Stellar users create and manage stablecoin loss protection positions, monitor live markets, resolve payments by username, and ask CoverFi AI for product guidance or research.
 
-<Tip>
-  Ready to make this your own? Start by editing this page. Update your `docs.json` file to customize your site. Then fill out the [Quickstart](/quickstart) page.
-</Tip>
+The project is open source and split into a public website, authenticated app, backend API, and Soroban contract workspace.
 
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  This card links to the quickstart page in your project.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>
+<CardGroup cols={2}>
+  <Card title="CoverFi app" icon="shield-check" href="/app">
+    Learn the dashboard routes, protection flow, username payments, and mobile behavior.
+  </Card>
+  <Card title="CoverFi AI" icon="message-circle" href="/ai">
+    Understand chat mode, research mode, live market context, and payment drafts.
+  </Card>
+  <Card title="Smart Contracts Ecosystem" icon="file-contract" href="/smart-contracts/overview">
+    Review the architecture, flow, deployment, and testing details of CoverFi contracts.
+  </Card>
+</CardGroup>
+
+## What CoverFi does
+
+- Lets users connect a Stellar wallet.
+- Creates stablecoin protection positions with amount, asset, trigger price, and duration.
+- Tracks active, triggered, claimed, revoked, and expired positions.
+- Shows portfolio market data from live price feeds.
+- Lets users register a CoverFi username and resolve usernames to wallet addresses.
+- Provides CoverFi AI for app help, account-aware answers, research mode, and private payment drafts.
+
+## Product surfaces
+
+| Surface | URL | Workspace |
+| --- | --- | --- |
+| Public site | `https://coverfi.space` | `mian-page` |
+| App | `https://app.coverfi.space` | `logic-pages` |
+| API | Deployment-specific | `server` |
+| Contracts | Stellar/Soroban | `coverfi-contracts` |
+
+## Important behavior
+
+Protected app routes preserve the page a user wanted to open. For example, visiting `/app/protect` directly sends the user to `/login?next=app/protect`, then returns them to `/app/protect` after wallet login.
+
+CoverFi AI can draft payment instructions, but it never executes transactions. Users must always review and sign through their wallet.

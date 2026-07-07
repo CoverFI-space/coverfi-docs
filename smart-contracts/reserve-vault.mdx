@@ -1,0 +1,23 @@
+---
+title: "Reserve Vault"
+description: "Liquidity pool for covering stablecoin claims"
+---
+
+The `reserve_vault` is the liquidity backbone of CoverFi. It holds funds provided by liquidity providers and accumulated premiums, ensuring there is enough capital to pay out valid claims.
+
+## Core Responsibilities
+
+- **Capacity Locking**: When a position is opened, the reserve vault locks the maximum possible payout capacity for that specific position. This guarantees solvency.
+- **Capacity Release**: If a position expires without a trigger, the locked capacity is released back into the available liquidity pool.
+- **Claim Disbursal**: If a position is successfully claimed, the vault disburses the calculated payout amount to the user.
+
+## Key Functions
+
+### `lock_capacity()`
+Reserves liquidity to guarantee a potential payout, reducing the vault's "available" balance while maintaining its "total" balance.
+
+### `release_capacity()`
+Unlocks liquidity when a position expires naturally.
+
+### `pay_claim()`
+Disburses the payout to the user and permanently deducts the amount from both the total and locked balances.
