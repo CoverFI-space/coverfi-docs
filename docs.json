@@ -7,7 +7,7 @@
     "light": "#FCD34D",
     "dark": "#B45309"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://ik.imagekit.io/i0xornmct/logo.png",
   "mintlifyBranding": false,
   "seo": {
     "indexing": "all"
