@@ -1,0 +1,56 @@
+---
+title: "Registry contracts"
+description: "Username, receipt, access, dispute, and anchor registries"
+---
+
+CoverFi includes registry contracts alongside the protection engine and vault system.
+
+## `username_registry`
+
+Maps a human-readable CoverFi username to a Stellar wallet address. This supports username payments and user discovery.
+
+Key readiness checks:
+
+- Enforce username format and length.
+- Prevent duplicate registrations.
+- Require user authorization for registration or updates.
+
+## `payment_receipt_registry`
+
+Stores payment receipt records created after wallet-signed payments.
+
+Key readiness checks:
+
+- Sender and receiver authorization.
+- Full payment transaction hash storage.
+- No duplicate receipt creation for the same payment hash.
+
+## `receipt_access_registry`
+
+Manages access grants for private receipt viewing.
+
+Key readiness checks:
+
+- Only authorized receipt participants can grant access.
+- Unauthorized viewers cannot read private receipt metadata.
+- Revocation is tested.
+
+## `receipt_anchor_registry`
+
+Anchors receipt batches with Merkle roots or equivalent commitments.
+
+Key readiness checks:
+
+- Admin-only batch anchoring.
+- Batch count and root validation.
+- Immutable historical anchors.
+
+## `dispute_registry`
+
+Records dispute metadata for payment or receipt workflows.
+
+Key readiness checks:
+
+- Prevent unauthorized dispute mutation.
+- Store clear status transitions.
+- Keep personally sensitive data off-chain.

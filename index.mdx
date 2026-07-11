@@ -5,7 +5,7 @@ description: "CoverFi is an open-source Stellar stablecoin protection dashboard"
 
 CoverFi helps Stellar users create and manage stablecoin loss protection positions, monitor live markets, resolve payments by username, and ask CoverFi AI for product guidance or research.
 
-The project is open source and split into a public website, authenticated app, backend API, and Soroban contract workspace.
+The project is open source and split into a public website, authenticated app, backend API, protocol monitor, and Soroban contract workspace.
 
 <CardGroup cols={2}>
   <Card title="CoverFi app" icon="shield-check" href="/app">
@@ -16,6 +16,12 @@ The project is open source and split into a public website, authenticated app, b
   </Card>
   <Card title="Smart Contracts Ecosystem" icon="file-contract" href="/smart-contracts/overview">
     Review the architecture, flow, deployment, and testing details of CoverFi contracts.
+  </Card>
+  <Card title="Security & trust" icon="lock" href="/security-trust">
+    Review the threat model, oracle policy, admin policy, and audit readiness checklist.
+  </Card>
+  <Card title="Economics model" icon="chart-line" href="/economics">
+    Understand fee, reserve capacity, payout cap, and utilization rules.
   </Card>
 </CardGroup>
 
@@ -35,10 +41,13 @@ The project is open source and split into a public website, authenticated app, b
 | Public site | `https://coverfi.space` | `mian-page` |
 | App | `https://app.coverfi.space` | `logic-pages` |
 | API | Deployment-specific | `server` |
+| Protocol monitor | Local/internal | `coverfi-monitor` |
 | Contracts | Stellar/Soroban | `coverfi-contracts` |
 
 ## Important behavior
 
 Protected app routes preserve the page a user wanted to open. For example, visiting `/app/protect` directly sends the user to `/login?next=app/protect`, then returns them to `/app/protect` after wallet login.
 
-CoverFi AI can draft payment instructions, but it never executes transactions. Users must always review and sign through their wallet.
+CoverFi AI can draft payment and protection instructions, but it never executes transactions. Users must always review and sign through their wallet.
+
+CoverFi protection is not insurance and does not guarantee a payout.

@@ -13,30 +13,62 @@ cargo test
 
 This will run all unit and integration tests, validating the protection math, fee routing, and expiration logic.
 
+The latest local verification also ran:
+
+```powershell
+cd logic-pages/contracts
+cargo test
+cargo build --release --target wasm32v1-none
+
+cd ../../coverfi-contracts
+cargo test
+```
+
+## Current Testnet Deployment
+
+| Component | Contract ID |
+| --- | --- |
+| Protection Engine | `CBDZVA7DCWVQMVAN6GLVU2N55OA6EEI4JIMKNVFTDK7PUMD2IF2LEQPT` |
+| Reserve Vault | `CAHKVKXP4P4PMM5BJMYA4UWTH7C7WB5Z33JFFFV3F6Y4PIPQFPVJTVWD` |
+| Oracle Adapter | `CDBYFBUFK7M7IIISHZZPUS32YAWRQZ6B3YOMAYBFDVIBCK3JFCYNMVC6` |
+| Premium Vault | `CCUSBTA2NAAG6AJTOVVPPNDVMKMDZV7ZSCH3BSLB4WMRMFHJ2VXC5ZD3` |
+| Protected Balance Vault | `CDOYRJL7APPNJ5OSLHCGOF75TUG6WJKYUASALQDQW6HJWT24VQORAMJE` |
+
+Verified settings:
+
+- XLM reserve seed: `10000000000` stroops.
+- Oracle price: `100000000`.
+- Current product schedule: `30` bps for 1 day, `100` bps for 7 days, `150` bps for 14 days, and `250` bps for 30 days.
+- Max payout: `1000` bps.
+- Max oracle age: `3600` seconds.
+- Reserve floor: `2000` bps.
+- Reserve drain: `5000` bps.
+
 ## How to Deploy
 
 To deploy the contracts to the Stellar network, clone the [coverfi-contracts repository](https://github.com/CoverFI-space/coverfi-contracts.git) and use the Soroban CLI.
 
 1. **Build the WASM contracts:**
 ```powershell
-rustup target add wasm32-unknown-unknown
-cargo build --release --target wasm32-unknown-unknown
+rustup target add wasm32v1-none
+cargo build --release --target wasm32v1-none
 ```
 
 2. **Deploy to Testnet:**
 ```powershell
 soroban contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/protection_engine.wasm \
+  --wasm target/wasm32v1-none/release/protection_engine.wasm \
   --source admin \
   --network testnet
 ```
-*(Repeat the deployment step for each vault and the oracle adapter, then configure their cross-contract initialization.)*
+Repeat the deployment step for each vault and the oracle adapter, then configure their cross-contract initialization. If the reserve vault ABI changes, redeploy the whole protection suite because the engine and vaults store each other's contract IDs.
 
 ## Security Notes
 
 > [!WARNING]  
 > **Audit Status**: These contracts are currently in beta and have not undergone a formal security audit. Use at your own risk.
 
-- **Oracle Dependency**: The system heavily relies on the `oracle_adapter`. If price feeds are delayed or manipulated, it could lead to improper payouts or missed claims.
+- **Oracle Dependency**: The engine rejects stale oracle data, but the system still relies on updater quality and monitoring.
+- **Reserve Payouts**: Claims are epoch-allocated and reserved before withdrawal, but the policy still requires audit and operational monitoring.
 - **Reentrancy**: State changes occur before external cross-contract token transfers to prevent reentrancy attacks.
-- **Access Control**: Critical functions like `update_price` and contract upgrades are strictly protected by the admin's authentication.
+- **Access Control**: Critical functions like price updates and contract upgrades must be protected by admin authentication, preferably multisig in production.

@@ -7,7 +7,7 @@
     "light": "#FCD34D",
     "dark": "#B45309"
   },
-  "favicon": "https://ik.imagekit.io/i0xornmct/logo.png",
+  "favicon": "/favicon.svg",
   "mintlifyBranding": false,
   "seo": {
     "indexing": "all"
@@ -21,6 +21,15 @@
         "group": "Start",
         "pages": [
           "index"
+        ]
+      },
+      {
+        "group": "Trust & operations",
+        "pages": [
+          "security-trust",
+          "economics",
+          "backend-operations",
+          "legal"
         ]
       },
       {
@@ -40,6 +49,7 @@
           "smart-contracts/premium-vault",
           "smart-contracts/reserve-vault",
           "smart-contracts/oracle-adapter",
+          "smart-contracts/registries",
           "smart-contracts/deployment"
         ]
       }

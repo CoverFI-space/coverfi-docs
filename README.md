@@ -27,13 +27,11 @@ The preview runs at `http://localhost:3000`.
 ## Documentation map
 
 - `index.mdx`: product overview
-- `quickstart.mdx`: local setup
-- `architecture.mdx`: project structure and data flow
 - `landing-site.mdx`: marketing website behavior
 - `app.mdx`: authenticated dashboard
 - `ai.mdx`: CoverFi AI behavior
-- `api-reference.mdx`: backend routes
-- `smart-contracts.mdx`: Soroban contract model
-- `configuration.mdx`: environment variables
-- `deployment.mdx`: production setup
-- `updates.mdx`: recent product updates
+- `security-trust.mdx`: threat model and operational trust policy
+- `economics.mdx`: fees, reserves, capacity, and payout model
+- `backend-operations.mdx`: API hardening, indexes, and deployment checks
+- `legal.mdx`: terms, privacy, and disclaimers
+- `smart-contracts/`: Soroban contract model and deployment docs

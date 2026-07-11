@@ -7,7 +7,7 @@ The `logic-pages` workspace powers the authenticated app at `app.coverfi.space`.
 
 ## Authentication
 
-CoverFi uses wallet login. Protected app routes require a connected wallet session.
+CoverFi uses wallet login. Protected app routes require a connected wallet session and acceptance of the current Terms and Privacy notice.
 
 If a user opens a protected route directly, CoverFi remembers the destination in the login URL:
 
@@ -24,6 +24,8 @@ https://app.coverfi.space/login?next=app/protect
 After login, the app returns the user to `/app/protect`.
 
 The login page **Home** action navigates in the same tab with browser back behavior. If there is no previous page, it falls back to the CoverFi landing site.
+
+The login page includes a short onboarding checklist and links to the Terms page. Users cannot open the app until they accept the current terms version.
 
 ## Dashboard pages
 

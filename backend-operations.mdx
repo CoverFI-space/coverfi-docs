@@ -1,0 +1,110 @@
+---
+title: "Backend operations"
+description: "API hardening, Firestore indexes, health checks, and deployment notes"
+---
+
+The `server` workspace runs the Express API for usernames, account state, payments, receipts, market data, Firebase-backed history, and CoverFi AI.
+
+## Security controls
+
+Current controls:
+
+- JSON body size limit of `32kb`.
+- Structured request logs with request IDs.
+- Route-specific rate limits.
+- Schema validation for usernames, wallets, receipts, account state, and AI prompts.
+- Wallet ownership headers for private wallet resources.
+- Firebase-backed structured payment and receipt records.
+- Local CORS support for the main app, preview app, and protocol monitor.
+
+The current wallet header convention is a hardening step, not final authentication. Production should replace it with signed wallet challenges and short-lived backend sessions.
+
+## Private route convention
+
+Private routes require:
+
+```txt
+X-CoverFi-Wallet-Address: <stellar-public-key>
+```
+
+Routes that enforce the header include:
+
+- `GET /api/account/:walletAddress`
+- `PUT /api/account/:walletAddress`
+- `GET /api/payments/:username`
+- `POST /api/payments/save`
+- `POST /api/receipts/save`
+- `GET /api/ai/chat/:walletAddress`
+- `POST /api/ai/chat` when a wallet address is supplied
+
+## Firestore collections
+
+| Collection | Purpose |
+| --- | --- |
+| `users` | Username, lowercase username, wallet address, terms metadata |
+| `accounts` | Profile, app data, selected network |
+| `payments` | Private payment receipt metadata and receipt display data |
+| `receipts` | Structured receipt records for legacy/manual receipt saves |
+| `chats` | Wallet-scoped AI chat history |
+
+## Required Firestore indexes
+
+Create these composite indexes:
+
+| Collection | Fields | Query |
+| --- | --- | --- |
+| `payments` | `participants` array, `createdAt` descending | Payment history by username |
+| `chats` | `walletAddress` ascending, `createdAt` ascending | Optional optimization for chat history |
+
+The current chat route sorts in memory after a wallet filter. Add the chat index before raising history limits.
+
+## Health checks
+
+`GET /api/health` returns:
+
+- `ok`
+- `aiConfigured`
+- `receiptStorage`
+- `termsVersion`
+
+Deployment platforms should use this route as the production readiness probe.
+
+## Protocol monitor
+
+The `coverfi-monitor` workspace is a read-only Vite app for local operations. It reads:
+
+- `GET /api/health`
+- `GET /api/legal/status`
+- `GET /api/prices`
+- `GET /api/portfolio/markets`
+- Soroban contract getters for engine config, reserve balances, oracle timestamp, premium totals, and restricted payout policy.
+
+Default local URL:
+
+```txt
+http://localhost:5175
+```
+
+## Environment variables
+
+Keep these server-side only:
+
+- `FIREBASE_SERVICE_ACCOUNT_BASE64`
+- `DEEPSEEK_API_KEY`
+
+Frontend-safe values:
+
+- `VITE_API_BASE_URL`
+- `VITE_FIREBASE_*`
+- Stellar public contract IDs and public asset issuer IDs
+
+## Deployment checklist
+
+1. Set Firebase service account and project ID.
+2. Enable Firestore Native mode.
+3. Create required Firestore indexes.
+4. Confirm payment history can be written to and read from Firebase.
+5. Set frontend app URL and API base URL.
+6. Run `npm run check`, `npm test`, and frontend builds.
+7. Verify `/api/health` after deployment.
+8. Verify the monitor can read contract and backend state.

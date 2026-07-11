@@ -14,6 +14,7 @@ graph TD
     User([User])
     Admin([Protocol Admin])
     Oracle([Oracle Adapter])
+    Registries([Registry Contracts])
     Engine[Protection Engine]
     ProtectedVault[Protected Balance Vault]
     PremiumVault[Premium Vault]
@@ -28,6 +29,7 @@ graph TD
     Engine -->|Moves Fee| PremiumVault
     Engine -->|Locks/Unlocks Capacity| ReserveVault
     Engine -->|Triggers Payout| ReserveVault
+    User -->|Registers usernames and receipts| Registries
     
     PremiumVault -->|Forwards Yield| ReserveVault
 ```
@@ -44,3 +46,5 @@ For a user protecting `1000` units with a `1%` fee and a `10%` max payout cap:
 6. **Data Storage**: The position is stored as active in the engine's state.
 
 If the oracle price falls below the trigger before expiry, the payout is calculated based on the price loss and is capped by the configured maximum payout basis points.
+
+The registry contracts support usernames, payment receipts, receipt access, receipt anchoring, and disputes. They are documented separately because they support app workflows without changing the reserve math.

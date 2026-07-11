@@ -3,7 +3,7 @@ title: "CoverFi AI"
 description: "AI chat, research mode, market context, and payment drafts"
 ---
 
-CoverFi AI is the assistant inside the authenticated dashboard. The sidebar and page title use **CoverFi AI**.
+CoverFi AI is the assistant inside the authenticated dashboard. It is framed as a UX and support layer, not the core protocol moat.
 
 ## What CoverFi AI knows
 
@@ -52,6 +52,16 @@ The app then:
 5. Lets the user copy the draft.
 
 CoverFi AI does not execute payments. The user must review and sign from their wallet.
+
+## Protection drafts
+
+CoverFi AI can also prepare a reviewable protection draft when the user writes something like:
+
+```txt
+Protect 100 dollars for 7 days
+```
+
+The app stores a one-time draft locally and pre-fills the Protect page with amount, asset, duration, and trigger price. The user must still review the fee, live price, trigger, and wallet prompt before signing.
 
 ## Chat input behavior
 
