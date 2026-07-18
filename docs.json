@@ -13,7 +13,7 @@
     "indexing": "all"
   },
   "chat": {
-    "enabled": true
+    "enabled": false
   },
   "navigation": {
     "pages": [
