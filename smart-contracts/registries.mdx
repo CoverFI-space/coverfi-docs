@@ -1,6 +1,6 @@
 ---
-title: "Registry contracts"
-description: "Username, receipt, access, dispute, and anchor registries"
+title: "Registry Contracts"
+description: "Username and receipt registry contracts"
 ---
 
 CoverFi includes registry contracts alongside the protection engine and vault system.
@@ -15,42 +15,26 @@ Key readiness checks:
 - Prevent duplicate registrations.
 - Require user authorization for registration or updates.
 
-## `payment_receipt_registry`
+## `receipt_registry`
 
-Stores payment receipt records created after wallet-signed payments.
+Stores payment receipt records created after wallet-signed payments and combines the previous receipt access, anchor, and dispute surfaces.
 
-Key readiness checks:
+Current controls:
 
-- Sender and receiver authorization.
+- Sender authorization for receipt creation.
 - Full payment transaction hash storage.
 - No duplicate receipt creation for the same payment hash.
-
-## `receipt_access_registry`
-
-Manages access grants for private receipt viewing.
-
-Key readiness checks:
-
+- Empty or oversized payment hashes and receipt URIs are rejected.
 - Only authorized receipt participants can grant access.
 - Unauthorized viewers cannot read private receipt metadata.
 - Revocation is tested.
-
-## `receipt_anchor_registry`
-
-Anchors receipt batches with Merkle roots or equivalent commitments.
-
-Key readiness checks:
-
 - Admin-only batch anchoring.
 - Batch count and root validation.
 - Immutable historical anchors.
-
-## `dispute_registry`
-
-Records dispute metadata for payment or receipt workflows.
-
-Key readiness checks:
-
 - Prevent unauthorized dispute mutation.
 - Store clear status transitions.
 - Keep personally sensitive data off-chain.
+
+Remaining limitation:
+
+- The registry stores a receipt proof for a payment hash, but it cannot independently prove that the referenced Stellar payment settled. The app/backend must verify settlement before creating or saving receipt metadata.

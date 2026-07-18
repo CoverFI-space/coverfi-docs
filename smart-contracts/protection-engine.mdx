@@ -9,17 +9,17 @@ The `protection_engine` is the central coordinator of the CoverFi ecosystem. It 
 
 - **Position Lifecycle**: Opens, claims, revokes, and expires positions.
 - **Math & Calculations**: Computes protection fees and max payout capacities based on configured parameters.
-- **Cross-Contract Coordination**: Triggers transfers across the `protected_balance_vault`, `premium_vault`, and `reserve_vault`.
+- **Cross-Contract Coordination**: Triggers transfers across the `protected_balance_vault` and `reserve_vault`.
 - **Oracle Verification**: Reads from the `oracle_adapter` during a trigger check and rejects stale prices using `max_oracle_age_seconds`.
 - **Restricted Payout Coordination**: Sends approved payout amounts to the reserve vault for epoch accounting instead of direct immediate disbursal.
 
 ## Key Functions
 
 ### `create_position()`
-Opens a new protection position, calculates fees, and moves funds from the user to the respective vaults.
+Opens a new protection position, reads a fresh oracle price as the entry price, calculates fees, moves protected principal into the protected balance vault, and collects premium into the reserve vault.
 
 ### `check_and_trigger()`
-Checks the current oracle price and timestamp against the position's trigger price and freshness policy. If the condition is met, the position becomes triggered.
+Checks the current oracle price and timestamp against the position's entry price and freshness policy. If the current price is below entry price before expiry, the position becomes triggered.
 
 ### `claim_payout()`
 Calculates the capped payout and records it with the reserve vault. The user receives funds only after reserve epoch allocation and `withdraw_reserved()`.

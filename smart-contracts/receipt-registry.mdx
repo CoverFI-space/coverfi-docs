@@ -1,0 +1,56 @@
+---
+title: "Receipt Registry"
+description: "Combined receipt, access, anchor, and dispute contract"
+---
+
+The `receipt_registry` contract combines the previous receipt-related contracts into one simpler MVP deployment.
+
+It handles:
+
+- Payment receipt proof metadata.
+- Duplicate payment transaction hash rejection.
+- Sent and received receipt indexes.
+- Receipt hash verification.
+- Receipt access grants and revocations.
+- Batch anchor records.
+- Receipt-linked dispute records.
+
+## Why merge this layer?
+
+Receipts, access grants, anchors, and disputes are one product surface for users. Keeping them split across four contracts created more contract IDs, more initialization steps, and more reviewer overhead without improving the protection reserve boundary.
+
+The money-path contracts remain separate:
+
+- `protection_engine`
+- `protected_balance_vault`
+- `reserve_vault`
+- `oracle_adapter`
+
+That keeps custody, reserve accounting, and oracle trust boundaries easier to review.
+
+## Main methods
+
+```txt
+initialize(admin)
+create_receipt(sender, receiver, payment_tx_hash, receipt_hash, encrypted_receipt_uri)
+get_receipt(receipt_id)
+get_receipt_id_for_payment_hash(payment_tx_hash)
+get_sent_receipts(sender)
+get_received_receipts(receiver)
+verify_receipt(receipt_id, receipt_hash)
+is_receipt_party(receipt_id, user)
+grant_access(caller, receipt_id, viewer)
+revoke_access(caller, receipt_id, viewer)
+has_access(receipt_id, viewer)
+anchor_batch(admin, merkle_root, receipt_count)
+open_dispute(user, receipt_id, reason_hash)
+respond_dispute(user, dispute_id, response_hash)
+resolve_dispute(admin, dispute_id, result)
+```
+
+## Security notes
+
+- Sender authorization is required to create a receipt.
+- Sender or receiver authorization is required to mark a receipt disputed or manage receipt access.
+- Admin authorization is required for batch anchors and dispute resolution.
+- Receipt metadata is proof-oriented. It should not store raw private payment notes.

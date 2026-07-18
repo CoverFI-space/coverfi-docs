@@ -20,7 +20,10 @@
       {
         "group": "Start",
         "pages": [
-          "index"
+          "index",
+          "getting-started",
+          "concepts",
+          "reviewer-guide"
         ]
       },
       {
@@ -44,11 +47,12 @@
         "group": "Smart Contracts Ecosystem",
         "pages": [
           "smart-contracts/overview",
+          "smart-contracts/architecture",
           "smart-contracts/protection-engine",
           "smart-contracts/protected-balance-vault",
-          "smart-contracts/premium-vault",
           "smart-contracts/reserve-vault",
           "smart-contracts/oracle-adapter",
+          "smart-contracts/receipt-registry",
           "smart-contracts/registries",
           "smart-contracts/deployment"
         ]
@@ -79,7 +83,8 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/CoverFI-space/coverfi-contracts.git"
+      "github": "https://github.com/coverfi-space",
+      "x": "https://x.com/coverfidotspace"
     }
   }
 }

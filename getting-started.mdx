@@ -1,0 +1,72 @@
+---
+title: "Getting Started"
+description: "How a user starts with CoverFi from wallet login to protection and receipts"
+---
+
+This page is for users opening CoverFi for the first time.
+
+CoverFi protection is not insurance and does not guarantee a payout. The app shows the rules before you sign, and your wallet is always the final approval step.
+
+## First session
+
+```mermaid
+flowchart TD
+  A[Open CoverFi] --> B[Connect Stellar wallet]
+  B --> C[Review and accept terms]
+  C --> D[Create or confirm username]
+  D --> E[Open dashboard]
+  E --> F[Choose protection, payment, receipt, or AI support]
+```
+
+## Create protection
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant A as CoverFi App
+  participant W as Wallet
+  participant E as Protection Engine
+  participant R as Reserve Vault
+  participant O as Oracle Adapter
+
+  U->>A: Enter asset, amount, and duration
+  A->>A: Calculate premium and max payout
+  U->>W: Review and sign
+  W->>E: Submit transaction
+  E->>O: Capture fresh entry price
+  E->>R: Lock max payout capacity
+  E->>O: Later reads price for trigger checks
+```
+
+Before signing, check:
+
+- Asset and amount.
+- Duration.
+- Live price shown by the app. The contract captures the entry price from the oracle when you sign.
+- Premium fee.
+- Maximum payout cap.
+- Wallet address.
+
+## Send a username payment
+
+```mermaid
+flowchart LR
+  A[Enter username] --> B[Resolve wallet address]
+  B --> C[Review destination]
+  C --> D[Sign Stellar payment]
+  D --> E[Payment settles]
+  E --> F[Receipt is saved]
+```
+
+Username payments still settle as normal Stellar payments. After confirmation, payments are final and CoverFi cannot reverse a payment sent to the wrong address.
+
+## Use CoverFi AI
+
+CoverFi AI can explain screens, draft protection inputs, and help with support-style questions. It cannot sign, send funds, guarantee payouts, or replace financial/legal advice.
+
+## What to do if something looks wrong
+
+- Do not sign if the wallet preview does not match the app.
+- Re-check the resolved username address before payment.
+- Check oracle freshness and reserve state in the monitor.
+- Use receipts and transaction hashes for support.

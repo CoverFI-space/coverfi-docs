@@ -1,23 +1,20 @@
 ---
 title: "Overview"
-description: "High-level overview of the CoverFi smart contract ecosystem"
+description: "High-level overview of CoverFi's Soroban contract system"
 ---
 
-The CoverFi smart contract ecosystem provides a decentralized stablecoin loss protection mechanism built on Stellar and Soroban. These contracts have been open-sourced at [CoverFI-space/coverfi-contracts](https://github.com/CoverFI-space/coverfi-contracts.git).
+CoverFi's smart contracts provide the on-chain rules for protection positions, vault accounting, oracle checks, usernames, receipts, access, anchors, and disputes.
 
-## Architecture Diagram
-
-The following diagram illustrates the interactions between the main components of the CoverFi contract ecosystem:
+The canonical source in this workspace is `coverfi-contracts`.
 
 ```mermaid
 graph TD
     User([User])
     Admin([Protocol Admin])
     Oracle([Oracle Adapter])
-    Registries([Registry Contracts])
+    Registries([Username + Receipt Registries])
     Engine[Protection Engine]
     ProtectedVault[Protected Balance Vault]
-    PremiumVault[Premium Vault]
     ReserveVault[Reserve Vault]
     
     User -->|Creates Position| Engine
@@ -26,25 +23,24 @@ graph TD
     
     Engine -->|Reads Prices| Oracle
     Engine -->|Moves Principal| ProtectedVault
-    Engine -->|Moves Fee| PremiumVault
+    Engine -->|Collects Premium| ReserveVault
     Engine -->|Locks/Unlocks Capacity| ReserveVault
     Engine -->|Triggers Payout| ReserveVault
     User -->|Registers usernames and receipts| Registries
-    
-    PremiumVault -->|Forwards Yield| ReserveVault
 ```
 
-## Money and Data Flow
+## Money and state flow
 
 For a user protecting `1000` units with a `1%` fee and a `10%` max payout cap:
 
-1. **Initiation**: The user creates a protection position.
-2. **Principal**: The principal amount (`1000` units) moves into the `protected_balance_vault`.
-3. **Fee Collection**: The protection fee (`10` units) moves into the `premium_vault`.
-4. **Yield Routing**: The `premium_vault` forwards fees to the `reserve_vault`.
-5. **Capacity Locking**: The `reserve_vault` locks the maximum payout capacity (`100` units).
-6. **Data Storage**: The position is stored as active in the engine's state.
+1. The user creates a protection position.
+2. Principal (`1000` units) moves into the `protected_balance_vault`.
+3. Premium (`10` units) moves directly into the `reserve_vault`.
+4. The `reserve_vault` locks the max payout capacity (`100` units).
+5. The position is stored as active in the engine.
 
-If the oracle price falls below the trigger before expiry, the payout is calculated based on the price loss and is capped by the configured maximum payout basis points.
+If the oracle price falls below the entry price before expiry, the payout is calculated based on the price loss and is capped by the configured maximum payout basis points.
 
-The registry contracts support usernames, payment receipts, receipt access, receipt anchoring, and disputes. They are documented separately because they support app workflows without changing the reserve math.
+The registry contracts support usernames, payment receipts, receipt access, receipt anchoring, and disputes. The receipt functions now live in one `receipt_registry` contract so the MVP has fewer deployments and simpler reviewer verification.
+
+See [Architecture Diagrams](/smart-contracts/architecture) for visual flows.

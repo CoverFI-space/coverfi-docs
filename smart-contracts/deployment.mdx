@@ -13,32 +13,46 @@ cargo test
 
 This will run all unit and integration tests, validating the protection math, fee routing, and expiration logic.
 
-The latest local verification also ran:
+The latest local verification for the updated protection engine ran:
 
 ```powershell
-cd logic-pages/contracts
-cargo test
-cargo build --release --target wasm32v1-none
-
-cd ../../coverfi-contracts
-cargo test
+cd D:\Stellar\coverfi-contracts
+cargo test -p protection_engine --target-dir ..\coverfi-contracts-target-check-2
 ```
+
+The latest local result was 16 protection engine tests passing plus doctests. A full workspace run may require Windows Application Control to allow each generated test binary.
 
 ## Current Testnet Deployment
 
+The current source targets a 6-contract architecture. These contracts were deployed and initialized on Stellar Testnet with `alice` as the testnet admin/deployer.
+
 | Component | Contract ID |
 | --- | --- |
-| Protection Engine | `CBDZVA7DCWVQMVAN6GLVU2N55OA6EEI4JIMKNVFTDK7PUMD2IF2LEQPT` |
-| Reserve Vault | `CAHKVKXP4P4PMM5BJMYA4UWTH7C7WB5Z33JFFFV3F6Y4PIPQFPVJTVWD` |
-| Oracle Adapter | `CDBYFBUFK7M7IIISHZZPUS32YAWRQZ6B3YOMAYBFDVIBCK3JFCYNMVC6` |
-| Premium Vault | `CCUSBTA2NAAG6AJTOVVPPNDVMKMDZV7ZSCH3BSLB4WMRMFHJ2VXC5ZD3` |
-| Protected Balance Vault | `CDOYRJL7APPNJ5OSLHCGOF75TUG6WJKYUASALQDQW6HJWT24VQORAMJE` |
+| Protection Engine | `CAIDNTTUYR4Y6QIGVNTID73HIJHY4Y6PAALTV7GOYRMRSXKRXFVXDRU4` |
+| Protected Balance Vault | `CCJOHOU4J3AKRBPB74XLCEUYGGFEULBKOKVIOPUQMZJZLQAN3JB4TXLD` |
+| Reserve Vault | `CBJX4RVARTPYYUCK7D7UTNMLMBXFSD525PY7QJA222UG43AJH2YFDAZM` |
+| Oracle Adapter | `CA2IUKPR4OTI74CSBB5ETUL3WZGX3MAOUBRTZ4X3IGEFMALGHQ2ILU4Z` |
+| Username Registry | `CA35BMNCDVCHCCNN3LNTWMXJJSAN5OWCIUQ2QJBK4GSVFA3AG6DC5P6N` |
+| Receipt Registry | `CCVVQPCU4IB6MRNCUCJDSEBMFR3CUQ7RX7BVADWIQBS4WZOSECM32Q6K` |
 
-Verified settings:
+Seeded testnet state:
 
-- XLM reserve seed: `10000000000` stroops.
+| Item | Value |
+| --- | --- |
+| Admin/deployer public key | `GAWITZOKW5IGYWAYCRLHRMYKDD5SYO3KRWF76DIRT3N4SI2UN2PW2IF2` |
+| XLM token contract | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
+| Oracle XLM price | `100000000` |
+| Reserve seeded | `1000000000` stroops / `100` XLM |
+
+The previous 10-contract testnet deployment is now legacy and should not be presented as the current ABI. Its IDs are retained only under `legacyBeforeSixContractMerge` in `/contracts.json`.
+
+The current machine-readable registry is published at `/contracts.json`; old IDs are listed only under `legacyBeforeSixContractMerge`.
+
+Recorded settings:
+
+- XLM reserve seed: re-check live state after each redeploy before publishing a demo script.
 - Oracle price: `100000000`.
-- Current product schedule: `30` bps for 1 day, `100` bps for 7 days, `150` bps for 14 days, and `250` bps for 30 days.
+- Source protection engine fee logic: duration-based schedule (`30`, `100`, `150`, `250` bps for 1, 7, 14, and 30 day terms). Verify or redeploy the listed contract IDs before treating a deployment as enforcing the latest source.
 - Max payout: `1000` bps.
 - Max oracle age: `3600` seconds.
 - Reserve floor: `2000` bps.
@@ -46,7 +60,23 @@ Verified settings:
 
 ## How to Deploy
 
-To deploy the contracts to the Stellar network, clone the [coverfi-contracts repository](https://github.com/CoverFI-space/coverfi-contracts.git) and use the Soroban CLI.
+## Production admin account policy
+
+Do not use a personal Freighter wallet, demo wallet, backend hot wallet, or reserve funder wallet as the production admin.
+
+Recommended account split:
+
+| Role | Purpose | Production recommendation |
+| --- | --- | --- |
+| Deployment source | Pays deployment fees and creates contract IDs | Dedicated deployer account with limited XLM, rotated after deployment |
+| Contract admin | Initializes contracts, pauses/unpauses, updates fee/oracle policy | Multisig or admin controller with hardware-backed signers |
+| Oracle updater | Publishes price updates to `oracle_adapter` | Separate operational key, later replaced by oracle provider/quorum design |
+| Reserve funder | Deposits reserve liquidity | Separate treasury/LP account, never reused as admin |
+| Backend signer | Signs backend sessions or service tasks | Server-side key only if required; never contract admin |
+
+For testnet, a single dedicated testnet admin is acceptable for speed. For mainnet, set the admin public key only after the team has chosen the multisig/admin-controller policy and documented signer custody. Publish the admin public key, deployment source, and contract IDs in the deployment record after verification.
+
+To deploy the contracts to the Stellar network, clone the [coverfi-contracts repository](https://github.com/coverfi-space) and use the Stellar CLI.
 
 1. **Build the WASM contracts:**
 ```powershell
@@ -61,7 +91,7 @@ soroban contract deploy \
   --source admin \
   --network testnet
 ```
-Repeat the deployment step for each vault and the oracle adapter, then configure their cross-contract initialization. If the reserve vault ABI changes, redeploy the whole protection suite because the engine and vaults store each other's contract IDs.
+Repeat the deployment step for `protection_engine`, `protected_balance_vault`, `reserve_vault`, `oracle_adapter`, `username_registry`, and `receipt_registry`, then configure their cross-contract initialization. If the reserve vault or engine ABI changes, redeploy the whole protection suite because the engine and vaults store each other's contract IDs.
 
 ## Security Notes
 
@@ -70,5 +100,6 @@ Repeat the deployment step for each vault and the oracle adapter, then configure
 
 - **Oracle Dependency**: The engine rejects stale oracle data, but the system still relies on updater quality and monitoring.
 - **Reserve Payouts**: Claims are epoch-allocated and reserved before withdrawal, but the policy still requires audit and operational monitoring.
+- **Deployment Drift**: Source changes do not affect existing contract IDs until rebuilt, redeployed, initialized, and verified.
 - **Reentrancy**: State changes occur before external cross-contract token transfers to prevent reentrancy attacks.
 - **Access Control**: Critical functions like price updates and contract upgrades must be protected by admin authentication, preferably multisig in production.

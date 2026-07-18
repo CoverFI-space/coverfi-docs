@@ -46,7 +46,7 @@ Send 11 XLM to @username
 The app then:
 
 1. Parses the amount, asset, and recipient username.
-2. Looks up the username in Firebase.
+2. Looks up the username in the Soroban username registry.
 3. Creates a Markdown-formatted private draft.
 4. Shows recipient wallet, processing fee, total amount, and sender wallet.
 5. Lets the user copy the draft.
@@ -61,7 +61,7 @@ CoverFi AI can also prepare a reviewable protection draft when the user writes s
 Protect 100 dollars for 7 days
 ```
 
-The app stores a one-time draft locally and pre-fills the Protect page with amount, asset, duration, and trigger price. The user must still review the fee, live price, trigger, and wallet prompt before signing.
+The app stores a one-time draft locally and pre-fills the Protect page with amount, asset, and duration. The entry price is captured from the fresh oracle quote when the user signs, so the user must still review the fee, live price, and wallet prompt before signing.
 
 ## Chat input behavior
 

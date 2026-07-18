@@ -1,0 +1,99 @@
+---
+title: "Architecture Diagrams"
+description: "Visual guide to CoverFi contract and app flows"
+---
+
+This page shows the main CoverFi flows as diagrams.
+
+## Contract map
+
+```mermaid
+flowchart TD
+  User[User Wallet]
+  Engine[Protection Engine]
+  Protected[Protected Balance Vault]
+  Reserve[Reserve Vault]
+  Oracle[Oracle Adapter]
+  Username[Username Registry]
+  Receipt[Receipt Registry]
+
+  User --> Engine
+  Engine --> Protected
+  Engine --> Reserve
+  Engine --> Oracle
+  User --> Username
+  User --> Receipt
+  Receipt -->|Access, anchors, disputes| Receipt
+```
+
+## Protection creation
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant W as Wallet
+  participant E as Protection Engine
+  participant P as Protected Vault
+  participant R as Reserve Vault
+
+  U->>W: Approves protection transaction
+  W->>E: create_position()
+  E->>P: deposit_from()
+  E->>R: collect_premium_from()
+  E->>R: lock_payout_capacity()
+```
+
+## Claim path
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant E as Protection Engine
+  participant O as Oracle Adapter
+  participant R as Reserve Vault
+
+  U->>E: check_and_trigger(position)
+  E->>O: get_price(asset)
+  E->>O: get_last_updated(asset)
+  E->>E: reject if price is stale or not below entry
+  U->>E: claim_payout(position)
+  E->>R: pay_claim()
+  R->>R: record claim in epoch
+  R->>R: allocate epoch budget
+  U->>R: withdraw_reserved()
+```
+
+## Username payment and receipt flow
+
+```mermaid
+flowchart LR
+  A[Sender enters username] --> B[Username Registry resolves address]
+  B --> C[Wallet signs Stellar payment]
+  C --> D[Stellar settles payment]
+  D --> E[Receipt Registry anchors proof]
+  E --> F[App stores wallet-local receipt history]
+```
+
+## Trust boundaries
+
+```mermaid
+flowchart TD
+  Wallet[User wallet signs funds movement]
+  Contracts[Soroban contracts enforce protocol state]
+  Backend[Backend provides AI, market, support, and health APIs]
+  Oracle[Oracle publishes price and timestamp]
+  Admin[Admin can pause/update policy]
+
+  Wallet --> Contracts
+  Oracle --> Contracts
+  Admin --> Contracts
+  Backend -. does not sign user transactions .-> Wallet
+```
+
+Important boundaries:
+
+- Backend cannot sign user transactions.
+- AI cannot move funds.
+- Oracle must be fresh before trigger checks pass.
+- Admin policy must be hardened before mainnet scale.
+- Reserve allocation limits how much can be withdrawn in each epoch.

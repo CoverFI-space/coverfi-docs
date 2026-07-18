@@ -6,7 +6,7 @@ CoverFi is an open-source Stellar stablecoin protection dashboard. The project h
 
 - `mian-page`: the public landing website at `coverfi.space`
 - `logic-pages`: the authenticated app at `app.coverfi.space`
-- `server`: the Express API for Firebase user data, live prices, and CoverFi AI
+- `server`: the Express API for live prices, CoverFi AI, health checks, and optional support records
 
 ## Local preview
 

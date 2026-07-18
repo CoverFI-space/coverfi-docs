@@ -1,9 +1,9 @@
 ---
 title: "Backend operations"
-description: "API hardening, Firestore indexes, health checks, and deployment notes"
+description: "API hardening, support storage, health checks, and deployment notes"
 ---
 
-The `server` workspace runs the Express API for usernames, account state, payments, receipts, market data, Firebase-backed history, and CoverFi AI.
+The `server` workspace runs the Express API for market data, CoverFi AI, health checks, legal/privacy support, and optional support records. Username ownership, protection creation, and username payment resolution are contract/client flows, not Firestore authority.
 
 ## Security controls
 
@@ -12,28 +12,36 @@ Current controls:
 - JSON body size limit of `32kb`.
 - Structured request logs with request IDs.
 - Route-specific rate limits.
-- Schema validation for usernames, wallets, receipts, account state, and AI prompts.
-- Wallet ownership headers for private wallet resources.
-- Firebase-backed structured payment and receipt records.
+- Schema validation for wallets, receipts, legal records, account/support records, and AI prompts.
+- Wallet-signed challenge/session authentication for private wallet resources.
+- Optional Firebase-backed support records for receipts, chat history, legal acceptance, and privacy export/delete workflows.
+- Wallet-scoped privacy export/delete endpoints for server-side data.
 - Local CORS support for the main app, preview app, and protocol monitor.
 
-The current wallet header convention is a hardening step, not final authentication. Production should replace it with signed wallet challenges and short-lived backend sessions.
+Production should use a stable `AUTH_SESSION_SECRET`, shared session revocation storage, and distributed rate limits. Local development may use the process-local fallback secret, but it invalidates sessions on restart.
 
-## Private route convention
+## Private route authentication
 
 Private routes require:
 
 ```txt
 X-CoverFi-Wallet-Address: <stellar-public-key>
+Authorization: Bearer <signed-session-token>
 ```
+
+Clients obtain a token with:
+
+- `POST /api/auth/challenge`
+- Wallet signs the returned challenge message.
+- `POST /api/auth/session`
+- `POST /api/legal/accept` records server-side terms acceptance for the signed wallet.
 
 Routes that enforce the header include:
 
-- `GET /api/account/:walletAddress`
-- `PUT /api/account/:walletAddress`
-- `GET /api/payments/:username`
-- `POST /api/payments/save`
 - `POST /api/receipts/save`
+- `POST /api/legal/accept`
+- `GET /api/privacy/export/:walletAddress`
+- `DELETE /api/privacy/:walletAddress`
 - `GET /api/ai/chat/:walletAddress`
 - `POST /api/ai/chat` when a wallet address is supplied
 
@@ -41,11 +49,12 @@ Routes that enforce the header include:
 
 | Collection | Purpose |
 | --- | --- |
-| `users` | Username, lowercase username, wallet address, terms metadata |
-| `accounts` | Profile, app data, selected network |
-| `payments` | Private payment receipt metadata and receipt display data |
-| `receipts` | Structured receipt records for legacy/manual receipt saves |
+| `users` | Legacy username/session data. The Soroban username registry is the current authority. |
+| `accounts` | Legacy profile/app data. The app now uses wallet-local browser state for profile and position display data. |
+| `payments` | Legacy payment history. The app now stores wallet-local receipt history after signed payments. |
+| `receipts` | Optional structured receipt records for support/manual receipt saves |
 | `chats` | Wallet-scoped AI chat history |
+| `legal_acceptances` | Wallet-scoped terms acceptance records |
 
 ## Required Firestore indexes
 
@@ -53,7 +62,6 @@ Create these composite indexes:
 
 | Collection | Fields | Query |
 | --- | --- | --- |
-| `payments` | `participants` array, `createdAt` descending | Payment history by username |
 | `chats` | `walletAddress` ascending, `createdAt` ascending | Optional optimization for chat history |
 
 The current chat route sorts in memory after a wallet filter. Add the chat index before raising history limits.
@@ -100,10 +108,10 @@ Frontend-safe values:
 
 ## Deployment checklist
 
-1. Set Firebase service account and project ID.
-2. Enable Firestore Native mode.
+1. Set Firebase service account and project ID only if support records, chat history, or legal acceptance sync are enabled.
+2. Enable Firestore Native mode for those optional records.
 3. Create required Firestore indexes.
-4. Confirm payment history can be written to and read from Firebase.
+4. Confirm contract username resolution works through the Soroban registry.
 5. Set frontend app URL and API base URL.
 6. Run `npm run check`, `npm test`, and frontend builds.
 7. Verify `/api/health` after deployment.

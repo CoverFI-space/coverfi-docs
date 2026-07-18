@@ -7,11 +7,11 @@ The CoverFi economics model is designed around visible fees, capped payout expos
 
 ## Core formula
 
-For a protected amount `A`, trigger price `T`, current price `P`, premium rate `R`, and maximum payout cap `C`:
+For a protected amount `A`, entry price `E`, current price `P`, premium rate `R`, and maximum payout cap `C`:
 
 ```txt
 premium_fee = A * R
-raw_loss = A * max(0, 1 - P)
+raw_loss = A * max(0, (E - P) / E)
 max_payout = A * C
 final_payout = min(raw_loss, max_payout)
 ```
@@ -22,13 +22,13 @@ Example:
 | --- | --- |
 | Protected amount | `1,000 USDC` |
 | Premium rate | `1.00%` for 7 days |
-| Trigger price | `0.98` |
+| Entry price captured at creation | `1.00` |
 | Current price at claim | `0.94` |
 | Max payout cap | `10%` |
 
 ```txt
 premium_fee = 1,000 * 0.01 = 10 USDC
-raw_loss = 1,000 * (1 - 0.94) = 60 USDC
+raw_loss = 1,000 * ((1.00 - 0.94) / 1.00) = 60 USDC
 max_payout = 1,000 * 0.10 = 100 USDC
 final_payout = min(60, 100) = 60 USDC
 ```
@@ -36,6 +36,14 @@ final_payout = min(60, 100) = 60 USDC
 ## Reserve capacity and restricted payouts
 
 Every active position locks the maximum payout amount from available reserve capacity. This prevents the app from accepting more exposure than the reserve can support.
+
+```mermaid
+flowchart LR
+  A[Total reserve] --> B[Locked capacity]
+  A --> C[Reserved claimables]
+  A --> D[Available capacity]
+  D --> E[New positions]
+```
 
 ```txt
 available_capacity = total_reserve - locked_capacity - reserved_claimables
@@ -60,6 +68,24 @@ Current testnet values:
 
 Users withdraw only after value has been reserved for their claim. This avoids immediate sequential payouts draining the pool.
 
+## Example claim timeline
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant E as Engine
+  participant O as Oracle
+  participant R as Reserve
+
+  U->>E: Request trigger check
+  E->>O: Read price and last update
+  E->>E: Calculate capped payout
+  U->>E: Claim payout
+  E->>R: Record claim into epoch
+  R->>R: Allocate budget using floor/drain policy
+  U->>R: Withdraw reserved amount
+```
+
 ## Premium policy
 
 Premiums are non-refundable after a signed position is accepted. They compensate reserve liquidity providers and increase protocol reserves depending on deployment configuration.
@@ -77,7 +103,7 @@ Premium pricing should account for:
 
 - Asset volatility and historical depeg frequency.
 - Duration.
-- Trigger price.
+- Entry price captured from the oracle at position creation.
 - Current reserve utilization.
 - Maximum payout cap.
 - Oracle confidence and feed freshness.

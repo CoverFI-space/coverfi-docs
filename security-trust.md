@@ -9,11 +9,11 @@ CoverFi is beta software. This page defines the security posture reviewers shoul
 
 | Boundary | Current control | Production requirement |
 | --- | --- | --- |
-| Wallet actions | Freighter prompts users to sign transactions | Add signed session challenges for backend write access |
-| Backend state | Wallet header ownership checks, schema validation, rate limits | Replace header convention with wallet-signed auth tokens |
+| Wallet actions | Freighter prompts users to sign transactions | Keep clear signing and add more transaction-state recovery UX |
+| Backend state | Wallet-signed challenge/session auth, schema validation, rate limits | Add persistent revocation, distributed rate limits, and auth monitoring |
 | Price data | Oracle adapter stores admin-updated scaled prices and the engine rejects stale prices | Use multi-source oracle feeds and monitoring |
 | Reserve payouts | Epoch allocation, reserved claimables, 20% floor, 50% surplus drip | Add keeper/operator automation and audit the reserve policy |
-| Receipts | Structured receipt records are stored in Firebase | Add retention controls, export/delete workflows, and anomaly alerts |
+| Receipts | Canonical receipt hashes, duplicate payment-hash rejection, wallet-local app history, optional support export/delete API | Add retention policy, UI controls, and anomaly alerts |
 | AI | Support and draft generation only | Keep AI non-custodial; never allow autonomous signing |
 
 ## Threat model
@@ -32,9 +32,11 @@ Current mitigations:
 
 - Route-level request validation.
 - Route-specific rate limiting for auth, payments, receipts, and AI.
-- Wallet ownership headers on private backend routes.
+- Signed wallet sessions on private backend routes.
 - Full transaction-hash validation for saved payment receipts.
-- Firebase-backed structured receipt storage.
+- Duplicate payment-hash rejection in the receipt registry.
+- Wallet-scoped server-side data export/delete endpoints.
+- Wallet-local structured receipt history after signed payments.
 - Contract-level oracle staleness checks.
 - Restricted payout accounting in the reserve vault.
 - Clear product disclaimer: CoverFi protection is not insurance and payouts are not guaranteed.
@@ -80,7 +82,7 @@ CoverFi contracts and backend services should only be upgraded through a documen
 
 1. Publish a change summary.
 2. Run contract tests and backend route tests.
-3. Verify deployment addresses and Firestore indexes.
+3. Verify deployment addresses, optional support indexes, and frontend contract IDs.
 4. Announce user-facing risk if behavior changes.
 5. Use emergency pause only for active exploitation, oracle failure, reserve accounting failure, or critical data exposure.
 

@@ -44,8 +44,25 @@ Records an approved claim into the current epoch and releases the position's loc
 ### `close_epoch()`
 Allocates reserve budget to approved claims using the configured floor and drain policy.
 
+### `allocate_epoch()`
+Allocates additional reserve budget to an older epoch. This is useful when an epoch was only partially funded, then the reserve later receives more liquidity.
+
 ### `withdraw_reserved()`
 Transfers the user's reserved amount and deducts it from total reserve and reserved reserve.
 
 ### `get_floor_bps()` and `get_drain_bps()`
 Expose the current restricted payout policy for monitors and operators.
+
+## User-friendly example
+
+```mermaid
+flowchart TD
+  A[Claim approved for 900] --> B[Epoch closes]
+  B --> C[Only 400 can be reserved now]
+  C --> D[User can withdraw 400]
+  D --> E[Reserve later receives more liquidity]
+  E --> F[Admin allocates old epoch again]
+  F --> G[Remaining claimable amount becomes available]
+```
+
+The reserve vault is intentionally conservative. It can approve a claim but only release what the restricted payout policy allocates.

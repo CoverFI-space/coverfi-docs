@@ -1,13 +1,24 @@
 ---
 title: "Introduction"
-description: "CoverFi is an open-source Stellar stablecoin protection dashboard"
+description: "CoverFi is a Stellar protection and payments product built with Soroban contracts"
 ---
 
-CoverFi helps Stellar users create and manage stablecoin loss protection positions, monitor live markets, resolve payments by username, and ask CoverFi AI for product guidance or research.
+CoverFi helps Stellar users create short-term protection positions, resolve payments by username, keep receipt history, and understand reserve risk before signing.
 
-The project is open source and split into a public website, authenticated app, backend API, protocol monitor, and Soroban contract workspace.
+Protection is not insurance. Payouts are not guaranteed. Every important action depends on wallet signatures, contract rules, oracle freshness, reserve state, and Stellar network execution.
+
+## Start with your goal
 
 <CardGroup cols={2}>
+  <Card title="I am a new user" icon="circle-play" href="/getting-started">
+    Learn the exact app flow from wallet connection to protection, payments, and receipts.
+  </Card>
+  <Card title="I am learning the terms" icon="book-open" href="/concepts">
+    Understand reserves, premiums, liquidity, basis points, oracle data, claims, and epochs.
+  </Card>
+  <Card title="I am reviewing CoverFi" icon="clipboard-check" href="/reviewer-guide">
+    See the SCF/reviewer summary, proof checklist, limitations, and milestone plan.
+  </Card>
   <Card title="CoverFi app" icon="shield-check" href="/app">
     Learn the dashboard routes, protection flow, username payments, and mobile behavior.
   </Card>
@@ -25,14 +36,19 @@ The project is open source and split into a public website, authenticated app, b
   </Card>
 </CardGroup>
 
-## What CoverFi does
+## How CoverFi works
 
-- Lets users connect a Stellar wallet.
-- Creates stablecoin protection positions with amount, asset, trigger price, and duration.
-- Tracks active, triggered, claimed, revoked, and expired positions.
-- Shows portfolio market data from live price feeds.
-- Lets users register a CoverFi username and resolve usernames to wallet addresses.
-- Provides CoverFi AI for app help, account-aware answers, research mode, and private payment drafts.
+```mermaid
+flowchart LR
+  A[Connect wallet] --> B[Accept terms]
+  B --> C[Choose protection]
+  C --> D[Review premium and payout cap]
+  D --> E[Sign transaction]
+  E --> F[Track position]
+  F --> G[Claim only if oracle and reserve rules allow]
+```
+
+CoverFi is split into a public website, authenticated app, backend API, protocol monitor, research library, docs site, and Soroban contract workspace.
 
 ## Product surfaces
 
@@ -50,4 +66,4 @@ Protected app routes preserve the page a user wanted to open. For example, visit
 
 CoverFi AI can draft payment and protection instructions, but it never executes transactions. Users must always review and sign through their wallet.
 
-CoverFi protection is not insurance and does not guarantee a payout.
+The core product is the protection and reserve workflow. AI is a support layer, not the trust anchor.
