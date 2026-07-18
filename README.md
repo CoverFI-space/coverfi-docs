@@ -27,6 +27,7 @@ The preview runs at `http://localhost:3000`.
 ## Documentation map
 
 - `index.mdx`: product overview
+- `investor-architecture.mdx`: investor-facing product, protocol, operations, and ledger transparency architecture
 - `landing-site.mdx`: marketing website behavior
 - `app.mdx`: authenticated dashboard
 - `ai.mdx`: CoverFi AI behavior
