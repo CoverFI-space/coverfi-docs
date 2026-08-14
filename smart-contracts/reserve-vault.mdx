@@ -1,68 +1,79 @@
 ---
 title: "Reserve Vault"
-description: "Liquidity pool for covering stablecoin claims"
+description: "Liquidity pool and accounting vault for V2 protection payouts"
 ---
 
-The `reserve_vault` is the liquidity backbone of CoverFi. It holds funds provided by liquidity providers and accumulated premiums, and accounts for capacity that can support eligible claims.
+The `reserve_vault` is the liquidity backbone of CoverFi. It holds provider assets and restricted protocol balances, mints internal provider shares, locks position-specific maximum payout capacity, and reserves settled payouts.
 
 ## Core Responsibilities
 
 - **Capacity Locking**: When a position is opened, the reserve vault locks the maximum possible payout capacity for that specific position. This is a solvency control, not a guarantee of payout.
-- **Capacity Release**: If a position expires without a trigger, the locked capacity is released back into the available liquidity pool.
-- **Restricted Claim Accounting**: If a position is successfully claimed, the vault records the approved claim into the current epoch instead of paying immediately.
-- **Reserved Withdrawals**: After an epoch is closed, the user withdraws only the amount reserved for their claim.
+- **Expiry Settlement Accounting**: Settlement releases unused capacity or reserves the full calculated payout for that position.
+- **Provider Shares And NAV**: Reserve providers receive shares and participate in matured underwriting results and realized claim losses.
+- **Withdrawal Queue**: Providers request withdrawals, wait through the cooldown, and can execute only when active backing remains safe.
+- **Restricted Balances**: Locked liabilities, reserved claims, unearned premiums, safety funds, and automation funds are excluded from provider withdrawals.
 
-## Payout Policy
+## V2 Accounting
 
-The reserve vault follows an epoched, reserved-claimable model:
+The V2 vault tracks pool state directly:
 
 ```txt
-free_liquidity = total_reserve - locked_reserve - reserved_reserve
-floor_reserve = total_reserve * floor_bps / 10000
-surplus = max(0, free_liquidity - floor_reserve)
-epoch_budget = min(unpaid_epoch_total, surplus * drain_bps / 10000)
+provider_nav = total_assets
+  - locked_liabilities
+  - reserved_claims
+  - unearned_premiums
+  - safety_balance
+  - automation_balance
+
+available_liquidity = provider_nav
 ```
 
-Current testnet defaults:
+V2 premium routing is bounded and visible. The protocol-fee rate defaults to `1200` bps and can be configured by admin within a `1000` to `1500` bps range:
 
 | Setting | Value |
 | --- | --- |
-| `floor_bps` | `2000` |
-| `drain_bps` | `5000` |
+| Underwriting | `7800` bps |
+| Protocol | `1000-1500` bps, default `1200` bps |
+| Safety | `700` bps |
+| Automation | Remainder plus fixed automation fee |
+
+The protocol portion is transferred to the configured treasury address automatically when `collect_premium_from()` runs. If the position includes an approved partner address, the partner reward is paid from the protocol portion first and the remainder goes to treasury.
 
 ## Key Functions
 
-### `lock_capacity()`
-Reserves liquidity for a potential payout, reducing the vault's "available" balance while maintaining its "total" balance.
+### `deposit_reserve()`
+Accepts reserve-provider capital and mints shares using current provider NAV.
 
-### `release_capacity()`
-Unlocks liquidity when a position expires naturally.
+### `lock_payout_capacity()`
+Reserves liquidity for a potential position payout, reducing available liquidity while preserving total assets.
 
-### `pay_claim()`
-Records an approved claim into the current epoch and releases the position's locked capacity. It does not transfer funds immediately.
+### `settle_position()`
+Called by the engine during expiry settlement. It releases unused capacity or moves the calculated payout into `reserved_claims`.
 
-### `close_epoch()`
-Allocates reserve budget to approved claims using the configured floor and drain policy.
+### `claim_payout()`
+Transfers the reserved payout to the owner and marks the claim as withdrawn.
 
-### `allocate_epoch()`
-Allocates additional reserve budget to an older epoch. This is useful when an epoch was only partially funded, then the reserve later receives more liquidity.
+### `set_treasury()` / `set_protocol_fee_bps()`
+Admin-only controls for the treasury recipient and protocol-fee rate. The rate is bounded to the published `1000-1500` bps range.
 
-### `withdraw_reserved()`
-Transfers the user's reserved amount and deducts it from total reserve and reserved reserve.
+### `request_withdraw()` / `cancel_withdraw()` / `execute_withdraw()`
+Manage reserve-provider withdrawal requests with a cooldown and safety checks.
 
-### `get_floor_bps()` and `get_drain_bps()`
-Expose the current restricted payout policy for monitors and operators.
+### `get_pool()`
+Exposes pool assets, shares, locked liabilities, reserved claims, unearned premiums, safety balance, automation balance, cumulative protocol revenue, cumulative underwriting, and cumulative claims.
 
 ## User-friendly example
 
 ```mermaid
 flowchart TD
-  A[Claim approved for 900] --> B[Epoch closes]
-  B --> C[Only 400 can be reserved now]
-  C --> D[User can withdraw 400]
-  D --> E[Reserve later receives more liquidity]
-  E --> F[Admin allocates old epoch again]
-  F --> G[Remaining claimable amount becomes available]
+  A[Position opens] --> B[Maximum payout locked]
+  B --> C[Expiry settlement]
+  C --> D{Payout?}
+  D -->|No| E[Unused capacity released]
+  D -->|Yes| F[Full calculated payout reserved]
+  F --> G[Owner claims payout]
+  E --> H[Owner withdraws principal]
+  G --> H
 ```
 
-The reserve vault is intentionally conservative. It can approve a claim but only release what the restricted payout policy allocates.
+The reserve vault is intentionally conservative. It never lets provider withdrawals use locked liabilities, reserved claims, or other restricted balances.

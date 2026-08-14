@@ -35,7 +35,8 @@ sequenceDiagram
   W->>E: Submit transaction
   E->>O: Capture fresh entry price
   E->>R: Lock max payout capacity
-  E->>O: Later reads price for trigger checks
+  E->>O: At expiry, read valid settlement price
+  E->>R: Release capacity or reserve payout
 ```
 
 Before signing, check:
@@ -46,6 +47,8 @@ Before signing, check:
 - Premium fee.
 - Maximum payout cap.
 - Wallet address.
+
+After expiry, anyone may submit settlement. If the position is claimable, only the owner can claim the reserved payout. Principal withdrawal is a separate owner-signed action.
 
 ## Send a username payment
 

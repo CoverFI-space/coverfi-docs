@@ -13,7 +13,7 @@ Required production policy:
 - Use at least three independent price sources or one established Stellar-compatible oracle provider with independent source aggregation.
 - Require median or quorum-based price acceptance before publishing a price used by `protection_engine`.
 - Enforce `max_oracle_age_seconds` on-chain and alert before prices approach the stale threshold.
-- Pause new position creation and claim triggering if price sources diverge beyond the configured deviation threshold.
+- Pause new position creation and settlement automation if price sources diverge beyond the configured deviation threshold. Owner exits for already-settled positions should remain available wherever contract state permits.
 - Publish oracle operator addresses, source list, max age, deviation threshold, and emergency contacts in deployment notes.
 
 Emergency oracle failure flow:
@@ -36,7 +36,7 @@ Required role split:
 - Protocol admin: updates fees, max payout, oracle age, and vault policy.
 - Pause authority: can pause quickly during incidents.
 - Oracle publisher: publishes prices only.
-- Treasury/reserve operator: funds reserves and closes/allocates payout epochs.
+- Treasury/reserve operator: funds reserves and monitors provider withdrawals, reserved claims, safety balances, and automation balances.
 
 Required thresholds:
 

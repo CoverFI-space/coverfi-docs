@@ -43,7 +43,7 @@ sequenceDiagram
   E->>R: lock_payout_capacity()
 ```
 
-## Claim path
+## Expiry settlement and exit path
 
 ```mermaid
 sequenceDiagram
@@ -52,15 +52,14 @@ sequenceDiagram
   participant O as Oracle Adapter
   participant R as Reserve Vault
 
-  U->>E: check_and_trigger(position)
-  E->>O: get_price(asset)
-  E->>O: get_last_updated(asset)
-  E->>E: reject if price is stale or not below entry
+  U->>E: settle_position(position)
+  E->>O: get_price_at_or_before(expiry)
+  E->>E: reject invalid or missing expiry observation
+  E->>R: settle_position(position, payout)
+  R->>R: release unused capacity or reserve full payout
   U->>E: claim_payout(position)
-  E->>R: pay_claim()
-  R->>R: record claim in epoch
-  R->>R: allocate epoch budget
-  U->>R: withdraw_reserved()
+  E->>R: claim_payout()
+  U->>E: withdraw_principal(position)
 ```
 
 ## Username payment and receipt flow
@@ -94,6 +93,6 @@ Important boundaries:
 
 - Backend cannot sign user transactions.
 - AI cannot move funds.
-- Oracle must be fresh before trigger checks pass.
+- Oracle observations must be valid for entry quotes and expiry settlement.
 - Admin policy must be hardened before mainnet scale.
-- Reserve allocation limits how much can be withdrawn in each epoch.
+- Reserve accounting prevents provider withdrawals from using locked liabilities or reserved claims.

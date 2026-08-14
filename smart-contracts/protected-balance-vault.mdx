@@ -3,11 +3,36 @@ title: "Protected Balance Vault"
 description: "Custodial contract for user principal"
 ---
 
-The `protected_balance_vault` acts as a secure custody layer for the principal stablecoins deposited by users when opening a protection position.
+The `protected_balance_vault` is the custody layer for protected principal. It is intentionally small: it accepts deposits and withdrawals only when instructed by the configured protection engine.
 
 ## Core Responsibilities
 
 - **Secure Custody**: Holds the principal collateral during the duration of an active position.
 - **Engine Exclusivity**: Only the authorized `protection_engine` is permitted to instruct this vault to move funds.
+- **Per-position accounting**: Tracks the principal balance for each protection position.
+- **Per-token totals**: Tracks total balance by token so monitor and diagnostics can compare contract accounting with token balances.
+- **Admin handover**: Supports a two-step admin transfer through `propose_admin()` and `accept_admin()`.
 
 During position expiration or revocation, the `protection_engine` directs this vault to return the funds directly to the user's wallet.
+
+## Key functions
+
+### `deposit_from(engine, user, token, amount, position_id)`
+
+Requires the configured engine address and transfers protected principal from the user into the vault.
+
+### `withdraw_to(engine, user, token, amount, position_id)`
+
+Requires the configured engine address and transfers principal back to the user after settlement rules allow exit.
+
+### `get_position_balance(position_id)`
+
+Returns the principal balance tracked for one position.
+
+### `get_total_token_balance(token)`
+
+Returns the total vault accounting balance for a token.
+
+## Boundary
+
+The backend cannot move funds from this vault. User principal can move only through wallet-signed flows that reach the configured engine and pass the engine's status checks.

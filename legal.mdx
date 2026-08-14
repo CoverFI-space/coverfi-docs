@@ -14,7 +14,7 @@ TERMS_VERSION=2026-07-11
 VITE_TERMS_VERSION=2026-07-11
 ```
 
-The login page stores acceptance locally using the current version. Username registration can also send the accepted version to the backend.
+The login page stores acceptance locally using the current version. The backend compatibility route confirms the storage boundary but does not persist linked legal records in a product database.
 
 ## Required user-facing disclaimer
 
@@ -31,7 +31,7 @@ The app terms page should include these user rules before production:
 - User controls wallet keys and must review every wallet signature.
 - CoverFi is non-custodial and never asks for seed phrases or private keys.
 - Protection is not insurance, not a bank product, not financial advice, and not guaranteed.
-- Payouts depend on contract rules, reserve state, oracle data, epoch allocation, and network execution.
+- Payouts depend on contract rules, reserve state, expiry-time oracle data, and network execution.
 - Premiums, service fees, and network fees may be non-refundable after signed acceptance.
 - User is responsible for taxes, reporting, and recordkeeping.
 - Usernames may be rejected, removed, reclaimed, or restricted for impersonation, abuse, rights violations, or misleading use.
@@ -39,7 +39,7 @@ The app terms page should include these user rules before production:
 - AI is only a support and drafting layer; users must verify all AI output.
 - Prohibited uses include fraud, sanctions evasion, illegal activity, market manipulation, phishing, spam, scraping, malware, impersonation, abuse of AI endpoints, upload abuse, and attempts to bypass security controls.
 - CoverFi may rate limit, suspend, remove content, pause contracts, or restrict access for security, compliance, legal, abuse, or reliability reasons.
-- Third-party services such as wallets, optional Firebase/support services, analytics, AI providers, price providers, Stellar infrastructure, and hosting providers have their own terms.
+- Third-party services such as wallets, analytics/indexer infrastructure, AI providers, price providers, Stellar infrastructure, and hosting providers have their own terms.
 - The service is provided as-is and as-available, subject to legally permitted warranty disclaimers and liability limits.
 - Production terms must define governing law, venue, dispute handling, support/contact address, and jurisdiction-specific consumer/privacy rights after counsel review.
 
@@ -49,12 +49,12 @@ CoverFi may process:
 
 - Wallet address.
 - Username.
-- Profile fields entered by the user.
+- Browser-local profile fields entered by the user.
 - Protection position state.
-- Payment receipt metadata.
-- Uploaded receipt URLs.
-- AI chat messages and replies.
-- Optional Firebase/support records and analytics events.
+- Browser-local payment receipt display data.
+- On-chain receipt hashes and encrypted references.
+- AI chat messages and replies sent to the configured AI provider when the user asks for a reply.
+- Privacy-safe analytics events and aggregate metrics.
 - Operational logs and request IDs.
 - IP-derived security metadata.
 - Browser, device, and network metadata needed for reliability and abuse prevention.
@@ -68,21 +68,18 @@ CoverFi may use data to:
 - Operate the app and backend.
 - Keep wallet-scoped app state locally in the browser.
 - Resolve usernames through the Soroban username registry.
-- Store local payment receipt metadata and optional support records.
+- Store encrypted local payment receipt metadata in the browser.
 - Provide AI support and drafts.
 - Prevent abuse and enforce rate limits.
 - Monitor errors, security, and product reliability.
 - Comply with legal obligations.
 
-Data may be processed by service providers such as optional Firebase/support services, Google Analytics for Firebase, AI providers, hosting providers, wallet providers, price providers, and Stellar infrastructure providers.
+Data may be processed by service providers such as AI providers, hosting providers, wallet providers, price providers, analytics/indexer infrastructure, and Stellar infrastructure providers.
 
 ## Official provider references
 
 Use official provider documentation when configuring product and privacy disclosures:
 
-- [Firebase web setup](https://firebase.google.com/docs/web/setup)
-- [Google Analytics for Firebase](https://firebase.google.com/docs/analytics)
-- [Firebase privacy and security](https://firebase.google.com/support/privacy)
 - [Google privacy policy](https://policies.google.com/privacy)
 - [Stellar developer documentation](https://developers.stellar.org/docs)
 - [Freighter wallet documentation](https://docs.freighter.app/)

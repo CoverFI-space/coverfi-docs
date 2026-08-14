@@ -136,7 +136,7 @@ flowchart LR
 | --- | --- | --- |
 | User and wallet | The user keeps keys in a Stellar wallet such as Freighter and signs protection creation, premiums, username changes, payments, receipt anchors, claims, payout withdrawals, and principal withdrawals. | The application can prepare and explain transactions, but it must not custody keys or sign user fund movement. |
 | Application and backend | API gateway, wallet signature sessions, protocol read service, encrypted receipt metadata, informational market data, partner credentials, quotas, webhooks, schemas, dashboards, and status pages. | Backend services improve usability, but contracts and the ledger remain the financial source of truth. |
-| Soroban contracts | Six canonical contracts in `coverfi-contracts`: Protection Engine for position rules, Protected Balance Vault for principal custody, Reserve Vault for premiums, reserves, locked capacity, and claim allocation, Oracle Adapter for prices and timestamps, Username Registry for payment identity, and Receipt Registry for proofs, access, and disputes. | Protection rules are enforced by contracts, not hidden in a private server. |
+| Soroban contracts | The current `coverfi-contracts` workspace includes protection, reserve, protected balance, oracle adapter, quorum oracle source, username, receipt, ZK verifier, payment lock, and floor shield contracts. | Protection rules, username identity, receipt anchors, and reserve accounting are enforced by contracts, not hidden in a private server. |
 | Operations and governance | Deployment identity, governance identity, oracle governance identity, oracle publisher, reserve funding treasury, fee sponsor identity, and channel accounts for high-volume operational sequence isolation. | Governance, oracle publishing, reserve funding, and fee sponsorship should be separated before meaningful mainnet exposure. |
 
 **Core flows**
@@ -316,24 +316,22 @@ CoverFi is fundable because it does not ask users or investors to believe in an 
 
 **Current implementation reality**
 
-The canonical `coverfi-contracts` workspace is the source of truth for the six-contract Soroban architecture: Protection Engine, Protected Balance Vault, Reserve Vault, Oracle Adapter, Username Registry, and Receipt Registry. Application and backend work should align to that contract interface before public mainnet use.
+The canonical `coverfi-contracts` workspace is the source of truth for the current Soroban architecture: Protection Engine, Reserve Vault, Protected Balance Vault, Oracle Adapter, Quorum Oracle Source, Username Registry, Receipt Registry, ZK Verifier, Payment Lock Engine, and Floor Shield Engine. The initial mainnet scope should stay limited to audited, launch-critical contracts while optional product surfaces mature through testnet evidence.
 
 Important gaps to close:
 
-1. Generate typed clients from the canonical contract specifications.
-2. Fix protection creation so the application uses the actual contract arguments and contract-derived quote.
-3. Make claim status come from contract and ingestion state, not only local application state.
-4. Create real receipt hashes and non-empty encrypted metadata locations before receipt anchoring.
-5. Make username ownership Soroban-authoritative, with indexed search for usability.
-6. Add real oracle, reserve, legal, and ingestion status endpoints.
-7. Implement durable ledger ingestion and reconciliation.
-8. Separate governance, oracle publishing, reserve funding, and operational signing roles.
+1. Generate and publish typed clients from the canonical contract specifications.
+2. Keep protection creation, claim status, username payments, and receipt anchoring aligned to deployed contract ABIs after every redeploy.
+3. Expand durable ledger ingestion and reconciliation for payments, usernames, receipts, positions, claims, reserve state, and oracle freshness.
+4. Complete production partner controls for webhook validation, idempotency, per-key rate limits, and signed delivery verification.
+5. Separate governance, oracle publishing, reserve funding, and operational signing roles before meaningful mainnet value.
+6. Complete third-party review, legal review, incident response, and mainnet smoke-test runbooks.
 
 **Recommended roadmap**
 
 | Phase | Work |
 | --- | --- |
-| Canonical testnet coherence | Generate typed clients from the six contracts; fix protection creation, fee display, claim flow, principal withdrawal, usernames, and receipt anchoring; add durable ingestion and signed wallet sessions; publish testnet status, reserve state, oracle freshness, and ingestion health. |
+| Canonical testnet coherence | Keep typed clients, app flows, backend routes, and deployed contract IDs aligned; verify username payments, receipt anchoring, protection creation, fee display, claim flow, principal withdrawal, reserve state, oracle freshness, and monitor health. |
 | Operational hardening | Add multisignature governance, separate oracle publisher and governance roles, add asset allowlist and issuer flag monitoring, reconcile reserves and principal custody, add rate limits, audit logs, privacy controls, and independent contract and service review. |
 | Capped mainnet pilot | Deploy reviewed mainnet contracts, seed reserve capacity, enable conservative assets, start with low per-user and per-asset exposure caps, publish reserve, claim, oracle, and ingestion metrics, and increase caps only after safety and usage thresholds are met. |
 | Partner scale | Release partner interface and SDK, add webhooks and dashboards, use channel account dispatch for approved operational submissions, and add institutional reporting and reserve-provider tooling after legal review. |

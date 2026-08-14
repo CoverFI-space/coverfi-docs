@@ -10,7 +10,7 @@ This page explains the words used across CoverFi.
 ```txt
 Premiums and seeded reserve create liquidity.
 Active positions lock some of that liquidity.
-Claims can only use allocated reserve.
+Settled payouts can only use position-specific reserved liquidity.
 Wallet signatures approve every user action.
 ```
 
@@ -25,11 +25,10 @@ Wallet signatures approve every user action.
 | Liquidity | Funds available in a vault to support future claims. |
 | Reserve | The vault balance used to back eligible payouts. |
 | Premium | Fee paid to open a protection position. |
-| Payout | Contract-approved amount after a valid trigger and allocation. |
+| Payout | Contract-approved amount after expiry settlement. |
 | Oracle | A source of price data for contracts. |
 | Stale price | Oracle data that is too old to safely use. |
 | Basis points | 1/100 of a percent. `100 bps = 1%`. |
-| Epoch | A claim accounting period. |
 | Admin | Privileged account used for controlled operations. |
 | Pause | Emergency control to stop sensitive flows. |
 | Audit | Independent smart contract review. |
@@ -42,7 +41,7 @@ CoverFi does not promise to make users whole. A payout depends on:
 - Entry price captured from the oracle at position creation.
 - Oracle freshness.
 - Reserve capacity.
-- Epoch allocation.
+- Position-specific reserve accounting.
 - User signature.
 - Stellar network execution.
 

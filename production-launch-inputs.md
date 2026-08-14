@@ -2,7 +2,7 @@
 
 This checklist explains what information is needed to finish the external production gates.
 
-Do not paste private keys, Firebase service account JSON, Redis tokens, or oracle API secrets into chat. Put secrets in the relevant local `.env` file or deployment secret manager, then tell the agent which variable names are set.
+Do not paste private keys, Redis tokens, oracle API secrets, AI provider keys, or deployment credentials into chat. Put secrets in the relevant local `.env` file or deployment secret manager, then tell the agent which variable names are set.
 
 ## 1. Admin And Multisig
 
@@ -77,7 +77,7 @@ sources: at least 3
 aggregation: median
 max_deviation_bps: 50 to 100 for stable assets
 max_oracle_age_seconds: 300 to 900 for mainnet stablecoin protection
-emergency_action: pause protection creation and claim triggering
+emergency_action: pause protection creation and settlement automation
 ```
 
 If using an established Stellar-compatible oracle provider, provide the provider name, feed IDs, network, and integration docs.
@@ -90,7 +90,7 @@ Before a public mainnet launch, prepare:
 - Contract source tree and WASM hashes.
 - Initialization parameters and admin addresses.
 - Threat model and known-risk list.
-- Economic model: reserve caps, max payout, fee schedule, floor, drain, and stress scenarios.
+- Economic model: reserve caps, max payout, fee routing, provider NAV, locked liabilities, reserved claims, withdrawal queue, and stress scenarios.
 - Test suite results.
 - Deployment scripts.
 - Upgrade and pause runbooks.
@@ -117,7 +117,7 @@ Give counsel:
 - Whether users pay fees/premiums.
 - Whether CoverFi markets protection, cover, payout, claim, reserve, or insurance-like wording.
 - Whether any entity controls reserve funds, oracle updates, admin keys, or claim operations.
-- Data map: wallet-local app/profile/receipt data, optional Firebase support records, chat history, wallet addresses, logs, analytics, and AI provider data.
+- Data map: wallet-local encrypted app/profile/receipt/AI data, public chain data, wallet addresses in contract events, HMAC log/analytics identifiers, aggregate analytics, and AI provider data.
 - Retention, export, and deletion policy.
 - Incident response and customer support process.
 

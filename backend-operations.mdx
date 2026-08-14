@@ -1,9 +1,11 @@
 ---
 title: "Backend operations"
-description: "API hardening, support storage, health checks, and deployment notes"
+description: "API hardening, health checks, privacy boundaries, and deployment notes"
 ---
 
-The `server` workspace runs the Express API for market data, CoverFi AI, health checks, legal/privacy support, and optional support records. Username ownership, protection creation, and username payment resolution are contract/client flows, not Firestore authority.
+The `server` workspace runs the Express API for market data, CoverFi AI, health checks, legal/privacy notices, status endpoints, partner APIs, protected invoices, webhooks, optional KYC/KYB hooks, and compatibility routes. Username ownership, username payment execution, protection creation, settlement, payout claims, principal withdrawal, payment resolution, and receipt anchoring are contract/client flows.
+
+The backend is not an authoritative product database. Private profile, payment, receipt, draft, and AI records live in wallet-unlocked encrypted browser storage. Protocol state lives on Stellar/Soroban.
 
 ## Security controls
 
@@ -11,14 +13,15 @@ Current controls:
 
 - JSON body size limit of `32kb`.
 - Structured request logs with request IDs.
+- Wallet addresses and transaction hashes redacted from standard request paths.
+- Wallet identifiers in logs and rate limits are HMAC pseudonyms.
 - Route-specific rate limits.
-- Schema validation for wallets, receipts, legal records, account/support records, and AI prompts.
+- Schema validation for wallets, receipts, legal notices, account compatibility routes, and AI prompts.
 - Wallet-signed challenge/session authentication for private wallet resources.
-- Optional Firebase-backed support records for receipts, chat history, legal acceptance, and privacy export/delete workflows.
-- Wallet-scoped privacy export/delete endpoints for server-side data.
+- Session issuer, audience, terms version, token ID, expiry, timing-safe HMAC validation, and in-memory revocation.
 - Local CORS support for the main app, preview app, and protocol monitor.
 
-Production should use a stable `AUTH_SESSION_SECRET`, shared session revocation storage, and distributed rate limits. Local development may use the process-local fallback secret, but it invalidates sessions on restart.
+Production should use a stable `AUTH_SESSION_SECRET`, a stable `PRIVACY_HMAC_SECRET`, shared session revocation storage, and distributed rate limits. Local development may use process-local fallback secrets, but that invalidates sessions on restart.
 
 ## Private route authentication
 
@@ -31,40 +34,31 @@ Authorization: Bearer <signed-session-token>
 
 Clients obtain a token with:
 
-- `POST /api/auth/challenge`
-- Wallet signs the returned challenge message.
-- `POST /api/auth/session`
-- `POST /api/legal/accept` records server-side terms acceptance for the signed wallet.
+1. `POST /api/auth/challenge`
+2. Wallet signs the returned challenge message.
+3. `POST /api/auth/session`
 
-Routes that enforce the header include:
+Clients may revoke the current token with:
 
-- `POST /api/receipts/save`
+```txt
+POST /api/auth/session/revoke
+```
+
+## Storage boundary
+
+The following compatibility endpoints do not persist product records server-side:
+
 - `POST /api/legal/accept`
+- `GET /api/account/:walletAddress`
+- `PUT /api/account/:walletAddress`
+- `POST /api/payments/save`
+- `GET /api/payments/:username`
+- `POST /api/receipts/save`
 - `GET /api/privacy/export/:walletAddress`
 - `DELETE /api/privacy/:walletAddress`
 - `GET /api/ai/chat/:walletAddress`
-- `POST /api/ai/chat` when a wallet address is supplied
 
-## Firestore collections
-
-| Collection | Purpose |
-| --- | --- |
-| `users` | Legacy username/session data. The Soroban username registry is the current authority. |
-| `accounts` | Legacy profile/app data. The app now uses wallet-local browser state for profile and position display data. |
-| `payments` | Legacy payment history. The app now stores wallet-local receipt history after signed payments. |
-| `receipts` | Optional structured receipt records for support/manual receipt saves |
-| `chats` | Wallet-scoped AI chat history |
-| `legal_acceptances` | Wallet-scoped terms acceptance records |
-
-## Required Firestore indexes
-
-Create these composite indexes:
-
-| Collection | Fields | Query |
-| --- | --- | --- |
-| `chats` | `walletAddress` ascending, `createdAt` ascending | Optional optimization for chat history |
-
-The current chat route sorts in memory after a wallet filter. Add the chat index before raising history limits.
+They return explicit local-storage or on-chain boundaries so old clients fail safely instead of writing linked wallet records to a backend database.
 
 ## Health checks
 
@@ -72,10 +66,27 @@ The current chat route sorts in memory after a wallet filter. Add the chat index
 
 - `ok`
 - `aiConfigured`
+- `accountStorage`
 - `receiptStorage`
+- `analyticsWalletStorage`
+- `backendProductDatabase`
 - `termsVersion`
 
-Deployment platforms should use this route as the production readiness probe.
+Deployment platforms should use this route as the readiness probe.
+
+## Protocol status endpoints
+
+The backend exposes read-only status routes for public monitoring:
+
+- `GET /api/status/contracts`
+- `GET /api/status/oracle`
+- `GET /api/status/reserve`
+- `GET /api/status/atlassian`
+- `GET /api/status/proof-of-reserve`
+
+The reserve endpoint reads V2 pool state, collateral, locked liabilities, available liquidity, utilization, and provider NAV. The oracle endpoint reads latest/fresh observations, reports age, and includes a volatile 24-hour runtime observation buffer. The Atlassian route includes public incident and scheduled-maintenance history when the configured Statuspage exposes it.
+
+`/api/status/proof-of-reserve` is intentionally testnet-only. It returns `not_configured` until a separate deployment-held Ed25519 signer is set through `TESTNET_RESERVE_ATTESTATION_SECRET` (and optionally its matching public key through `TESTNET_RESERVE_ATTESTATION_PUBLIC_KEY`). The secret is never returned; a configured endpoint returns a canonical payload, signer public key, and signature. This is an operational testnet attestation, not an audit or a guarantee of payout.
 
 ## Protocol monitor
 
@@ -85,7 +96,8 @@ The `coverfi-monitor` workspace is a read-only Vite app for local operations. It
 - `GET /api/legal/status`
 - `GET /api/prices`
 - `GET /api/portfolio/markets`
-- Soroban contract getters for engine config, reserve balances, oracle timestamp, premium totals, and restricted payout policy.
+- Backend oracle and reserve status endpoints.
+- Soroban contract getters for engine config, reserve pool state, oracle observations, and V2 quote checks.
 
 Default local URL:
 
@@ -97,22 +109,42 @@ http://localhost:5175
 
 Keep these server-side only:
 
-- `FIREBASE_SERVICE_ACCOUNT_BASE64`
-- `DEEPSEEK_API_KEY`
+- `AUTH_SESSION_SECRET`
+- `PRIVACY_HMAC_SECRET`
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_ENDPOINT`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `STATUSPAGE_API_KEY`
+- `DATABASE_URL`
+- `DIDIT_API_KEY`
+- `DIDIT_WEBHOOK_SECRET`
+- `PARTNER_API_KEY_PEPPER`
 
 Frontend-safe values:
 
 - `VITE_API_BASE_URL`
-- `VITE_FIREBASE_*`
-- Stellar public contract IDs and public asset issuer IDs
+- Stellar public contract IDs.
+- Public asset contract IDs and issuer IDs.
+- Public status/monitor URLs.
 
 ## Deployment checklist
 
-1. Set Firebase service account and project ID only if support records, chat history, or legal acceptance sync are enabled.
-2. Enable Firestore Native mode for those optional records.
-3. Create required Firestore indexes.
-4. Confirm contract username resolution works through the Soroban registry.
-5. Set frontend app URL and API base URL.
+1. Set stable auth and privacy HMAC secrets.
+2. Configure trusted proxy hops for the deployment platform.
+3. Configure contract IDs and public source account for read-only status calls.
+4. Configure Azure OpenAI only if AI support should be enabled.
+5. Configure Upstash or another distributed rate-limit backend for production scale.
 6. Run `npm run check`, `npm test`, and frontend builds.
-7. Verify `/api/health` after deployment.
+7. Verify `/api/health`, `/api/status/oracle`, and `/api/status/reserve`.
 8. Verify the monitor can read contract and backend state.
+
+## Partner API versions
+
+The backend currently contains two partner API surfaces.
+
+| API surface | Status | SDK |
+| --- | --- | --- |
+| `/api/partner/v1/*` | Modern partner API for quotes, positions, assets, pricing, usage, claims, payouts, receipts, webhooks, sessions, and signing payloads. | `packages/coverfi-sdk` |
+| `/api/partners/*` | Legacy/simple partner API retained for compatibility and early sandbox flows. | `partner-sdk` |
+
+New technical reviewers should evaluate the modern `/api/partner/v1/*` API first. Production work should align scopes, idempotency, webhook validation, and rate limits across the surviving API surface before mainnet scale.

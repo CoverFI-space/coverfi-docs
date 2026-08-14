@@ -3,29 +3,84 @@ title: "Protection Engine"
 description: "Core logic controller for protection positions"
 ---
 
-The `protection_engine` is the central coordinator of the CoverFi ecosystem. It interfaces with users and manages the lifecycle of stablecoin loss protection positions.
+The `protection_engine` is the central coordinator of the CoverFi ecosystem. It interfaces with users and manages the lifecycle of V2 protection positions.
 
 ## Core Responsibilities
 
-- **Position Lifecycle**: Opens, claims, revokes, and expires positions.
-- **Math & Calculations**: Computes protection fees and max payout capacities based on configured parameters.
-- **Cross-Contract Coordination**: Triggers transfers across the `protected_balance_vault` and `reserve_vault`.
-- **Oracle Verification**: Reads from the `oracle_adapter` during a trigger check and rejects stale prices using `max_oracle_age_seconds`.
-- **Restricted Payout Coordination**: Sends approved payout amounts to the reserve vault for epoch accounting instead of direct immediate disbursal.
+- **Position Lifecycle**: Opens positions, settles them at expiry, lets owners claim payouts, and lets owners withdraw protected principal.
+- **Math & Calculations**: Computes quote components, notional, risk premium, total due, and maximum payout capacity.
+- **Cross-Contract Coordination**: Moves protected principal through the `protected_balance_vault` and reserves payout capacity in the `reserve_vault`.
+- **Oracle Verification**: Reads a fresh entry observation at purchase and an observation at or before expiry during settlement.
+- **Payout Coordination**: Reserves the complete calculated payout for the settled position; no normal epoch allocation step is required.
+- **Compliance Gate**: For high-value claims or withdrawals, checks proof-status records in `zk_verifier` when the configured threshold requires MFA and KYC attestations.
+
+## Position states
+
+| State | Meaning |
+| --- | --- |
+| `Active` | Position is open and has not reached successful settlement. |
+| `AwaitingOracle` | Expiry was reached, but a valid expiry observation was not available. |
+| `SettledNoPayout` | Position settled with no eligible payout. |
+| `Claimable` | Position settled with a reserved payout claim. |
+| `Claimed` | Reserved payout was claimed, but principal may still need withdrawal. |
+| `PrincipalWithdrawn` | Protected principal has been withdrawn after settlement rules allowed exit. |
+
+## Quote inputs
+
+The V2 quote exposes more than one premium number so reviewers can see why a user is paying the displayed fee.
+
+| Input | Source |
+| --- | --- |
+| Entry price | Fresh oracle observation from `oracle_adapter`. |
+| Base premium | Duration schedule: 1, 7, 14, or 30 day term bands. |
+| Volatility surcharge | `oracle_adapter.get_volatility_bps`. |
+| Utilization surcharge | `reserve_vault.get_projected_utilization_bps`. |
+| Concentration surcharge | `reserve_vault.get_projected_concentration_bps`. |
+| Safety margin | Contract-defined basis-point margin. |
+| Automation fee | Fixed fee converted into premium asset terms. |
 
 ## Key Functions
 
 ### `create_position()`
 Opens a new protection position, reads a fresh oracle price as the entry price, calculates fees, moves protected principal into the protected balance vault, and collects premium into the reserve vault.
 
-### `check_and_trigger()`
-Checks the current oracle price and timestamp against the position's entry price and freshness policy. If the current price is below entry price before expiry, the position becomes triggered.
+### `quote_position()`
+Returns the V2 quote components: entry price, notional, maximum payout, base premium, volatility/utilization/concentration surcharges, safety margin, risk premium, protocol commission, automation fee, total due, and utilization/concentration/volatility basis points.
+
+### `settle_position()`
+Can be called after expiry by any caller. It reads the latest valid oracle observation at or before expiry, computes the settlement result, releases unused capacity, and reserves any calculated payout for the position owner.
 
 ### `claim_payout()`
-Calculates the capped payout and records it with the reserve vault. The user receives funds only after reserve epoch allocation and `withdraw_reserved()`.
+Lets the position owner claim the reserved payout after settlement when the position is claimable.
 
-### `expire_position()`
-Returns the protected principal back to the user if the duration ends without a price trigger.
+### `withdraw_principal()`
+Lets the position owner withdraw protected principal after settlement or no-payout settlement, according to contract state.
 
-### `set_max_oracle_age_seconds()`
-Updates the freshness window used by trigger checks. This is admin-only and should be governed by a production admin policy.
+### `pause()` / `unpause()`
+Admin controls for new sales. Settlement, payout claims, and principal withdrawal should remain available for exits.
+
+## Cross-contract sequence
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant E as Protection engine
+  participant O as Oracle adapter
+  participant P as Protected vault
+  participant R as Reserve vault
+
+  U->>E: create_position()
+  E->>O: get_fresh_price()
+  E->>R: get_projected_utilization_bps()
+  E->>R: get_projected_concentration_bps()
+  E->>P: deposit_from()
+  E->>R: collect_premium_from()
+  E->>R: lock_payout_capacity()
+```
+
+## Safety notes
+
+- New position creation is blocked while paused.
+- Settlement remains available while paused so users can exit old positions.
+- The engine rejects unsupported markets, invalid durations, stale entry prices, unsafe utilization, excessive concentration, and too-small notionals.
+- Payout claims are owner-only and can be claimed once through the reserve vault.

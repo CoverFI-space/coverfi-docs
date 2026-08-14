@@ -1,0 +1,56 @@
+---
+title: "Floor Shield Engine"
+description: "Floor-price protection contract with reserve-backed payout and principal exit"
+---
+
+The `floor_shield_engine` lets a user define a floor price for a protected amount. If the expiry price is below that floor, the position becomes claimable up to a configured maximum payout cap.
+
+## Responsibilities
+
+- Quote a floor shield from a fresh oracle observation.
+- Validate duration and floor price.
+- Move protected principal into the protected vault.
+- Collect premium through the reserve vault.
+- Lock maximum payout capacity.
+- Settle after expiry using an oracle observation at or before expiry.
+- Let the owner claim payout and withdraw principal according to status.
+
+## Main methods
+
+```txt
+initialize(admin, protected_vault, reserve_vault, oracle_adapter, protected_asset, payout_asset, premium_asset)
+quote_shield(amount, floor_price, duration_seconds)
+create_shield(user, amount, floor_price, duration_seconds, partner)
+settle_shield(caller, shield_id)
+claim_payout(user, shield_id)
+withdraw_principal(user, shield_id)
+get_shield(shield_id)
+get_user_shields(user)
+pause(admin)
+unpause(admin)
+```
+
+## Flow
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant F as Floor shield engine
+  participant P as Protected vault
+  participant R as Reserve vault
+  participant O as Oracle adapter
+
+  U->>F: create_shield()
+  F->>P: deposit_from()
+  F->>R: collect_premium_from()
+  F->>R: lock_payout_capacity()
+  U->>F: settle_shield() after expiry
+  F->>O: get_price_at_or_before()
+  F->>R: settle_position()
+  U->>F: claim_payout() when claimable
+  U->>F: withdraw_principal()
+```
+
+## Boundary
+
+Floor shield is an experimental product contract. Treat it as separate from the core protection engine when scoping mainnet launch or audit work.

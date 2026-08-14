@@ -7,10 +7,10 @@ The CoverFi economics model is designed around visible fees, capped payout expos
 
 ## Core formula
 
-For a protected amount `A`, entry price `E`, current price `P`, premium rate `R`, and maximum payout cap `C`:
+For a protected amount `A`, entry price `E`, expiry settlement price `P`, risk premium `R`, and maximum payout cap `C`:
 
 ```txt
-premium_fee = A * R
+premium_fee = quote_position(...).total_due
 raw_loss = A * max(0, (E - P) / E)
 max_payout = A * C
 final_payout = min(raw_loss, max_payout)
@@ -23,7 +23,7 @@ Example:
 | Protected amount | `1,000 USDC` |
 | Premium rate | `1.00%` for 7 days |
 | Entry price captured at creation | `1.00` |
-| Current price at claim | `0.94` |
+| Expiry settlement price | `0.94` |
 | Max payout cap | `10%` |
 
 ```txt
@@ -33,40 +33,41 @@ max_payout = 1,000 * 0.10 = 100 USDC
 final_payout = min(60, 100) = 60 USDC
 ```
 
-## Reserve capacity and restricted payouts
+## Reserve capacity and position-specific payouts
 
 Every active position locks the maximum payout amount from available reserve capacity. This prevents the app from accepting more exposure than the reserve can support.
 
 ```mermaid
 flowchart LR
-  A[Total reserve] --> B[Locked capacity]
-  A --> C[Reserved claimables]
+  A[Total assets] --> B[Locked liabilities]
+  A --> C[Reserved claims]
   A --> D[Available capacity]
   D --> E[New positions]
 ```
 
 ```txt
-available_capacity = total_reserve - locked_capacity - reserved_claimables
+provider_nav = total_assets
+  - locked_liabilities
+  - reserved_claims
+  - unearned_premiums
+  - safety_balance
+  - automation_balance
 ```
 
-When a position expires without a trigger, unused locked capacity is released.
+When a position settles with no payout, unused locked capacity is released. When a position settles with a payout, the full calculated payout is reserved for that position and the owner can claim it through the engine.
 
-When a claim is approved, the vault does not transfer the payout immediately. It records the approved claim into the current epoch. An admin/operator then closes the epoch, and the reserve vault allocates claimable value using:
-
-```txt
-surplus = total_reserve - floor_reserve - already_reserved
-epoch_budget = min(unpaid_epoch_claims, surplus * drain_bps / 10000)
-user_reserved = approved_claim * epoch_budget / total_epoch_claims
-```
-
-Current testnet values:
+Current V2 routing:
 
 | Policy | Value |
 | --- | --- |
-| Reserve floor | `2000` bps |
-| Surplus drain | `5000` bps |
+| Underwriting | `7800` bps |
+| Protocol | `1000-1500` bps, default `1200` bps |
+| Safety | `700` bps |
+| Automation | Remainder plus fixed automation fee |
 
-Users withdraw only after value has been reserved for their claim. This avoids immediate sequential payouts draining the pool.
+The protocol portion is transferred automatically to the configured treasury address during position creation. Approved partner rewards, when present, are paid from the protocol portion before the remaining protocol amount reaches treasury.
+
+Reserve-provider withdrawals use shares, NAV, a cooldown queue, and available-liquidity checks. Locked liabilities, reserved claims, unearned premiums, safety funds, and automation funds are excluded.
 
 ## Example claim timeline
 
@@ -77,13 +78,12 @@ sequenceDiagram
   participant O as Oracle
   participant R as Reserve
 
-  U->>E: Request trigger check
-  E->>O: Read price and last update
+  U->>E: Position reaches expiry
+  E->>O: Read latest valid price at or before expiry
   E->>E: Calculate capped payout
   U->>E: Claim payout
-  E->>R: Record claim into epoch
-  R->>R: Allocate budget using floor/drain policy
-  U->>R: Withdraw reserved amount
+  E->>R: Transfer reserved payout
+  U->>E: Withdraw protected principal
 ```
 
 ## Premium policy
@@ -116,7 +116,7 @@ The model should not go to production without:
 - Maximum position size per wallet.
 - Reserve utilization caps.
 - Oracle freshness checks.
-- Epoch close/withdraw monitoring.
+- Settlement, payout-claim, and principal-withdrawal monitoring.
 - Emergency pause procedures.
 - Published fee and payout examples.
 

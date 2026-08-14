@@ -1,0 +1,115 @@
+---
+title: "Partner sandbox"
+description: "Optional PostgreSQL-backed partner, analytics, API-key, and webhook foundation"
+---
+
+CoverFi partner sandbox support is optional. The main app and contract flows do not require it. When `DATABASE_URL` is configured, the backend can store rebuildable analytics aggregates, partner records, app records, API-key hashes, webhook registrations, protected invoices, and delivery state.
+
+New integrations should start with the modern `/api/partner/v1/*` API and `packages/coverfi-sdk`. The older `/api/partners/*` API and `partner-sdk` are retained for compatibility while the partner surface is consolidated.
+
+## Enable the database
+
+```bash
+cd server
+npm run db:migrate
+```
+
+Required server variables:
+
+- `DATABASE_URL`
+- `DATABASE_SSL=true` when the provider requires TLS
+- `PARTNER_ADMIN_WALLETS`
+- `PARTNER_API_KEY_PEPPER`
+
+The server stores partner API keys and webhook secrets only as keyed hashes. The raw secret is returned once at creation.
+
+## Privacy rules
+
+- Analytics tables must not store raw wallet addresses.
+- Wallet identifiers use HMAC references.
+- Aggregate metrics include a `cohort_suppressed` flag for small cohorts.
+- Analytics are non-authoritative and rebuildable from public ledger data.
+- Do not join analytics with support messages, AI text, receipt private content, IP addresses, or browser identifiers.
+
+## Admin endpoints
+
+Admin endpoints require a wallet-authenticated session from a wallet listed in `PARTNER_ADMIN_WALLETS`.
+
+- `GET /api/partners/admin`
+- `POST /api/partners/admin`
+- `PATCH /api/partners/admin/:partnerId/status`
+- `POST /api/partners/admin/:partnerId/api-keys`
+
+## Modern partner API endpoints
+
+Modern partner endpoints require `Authorization: Bearer <partner-api-key>` or a partner session token where supported.
+
+- `POST /api/partner/v1/protection/quotes`
+- `POST /api/partner/v1/protection/positions`
+- `GET /api/partner/v1/protection/positions`
+- `GET /api/partner/v1/assets`
+- `GET /api/partner/v1/pricing`
+- `GET /api/partner/v1/usage`
+- `GET /api/partner/v1/claims`
+- `GET /api/partner/v1/payouts`
+- `GET /api/partner/v1/receipts`
+- `GET /api/partner/v1/webhooks`
+- `POST /api/partner/v1/webhooks`
+- `GET /api/partner/v1/wallets/signing-payloads/:positionId`
+- `POST /api/partner/v1/wallets/signing-payloads/:positionId/submit`
+
+The modern SDK lives in `packages/coverfi-sdk`.
+
+```bash
+cd packages/coverfi-sdk
+npm run check
+```
+
+Partner API keys and webhook secrets must stay server-side. Do not ship them in a browser bundle.
+
+## Legacy partner API endpoints
+
+Partner endpoints require `Authorization: Bearer <partner-api-key>`.
+
+- `GET /api/partners/market-config`
+- `POST /api/partners/quote`
+- `POST /api/partners/transaction-drafts/protection`
+- `GET /api/partners/metrics`
+- `POST /api/partners/webhooks`
+- `POST /api/partners/webhooks/test`
+
+API keys never authorize wallet transactions or contract administration. Transaction-draft endpoints return reviewable method/argument data only; the user wallet must simulate, review, sign, and submit.
+
+## Legacy TypeScript SDK
+
+The repository includes a legacy Testnet SDK at `partner-sdk`.
+
+```bash
+cd partner-sdk
+npm run build
+```
+
+The SDK exposes:
+
+- `CoverFiPartnerClient` for market configuration, quotes, unsigned protection transaction drafts, metrics, webhook registration, and webhook tests.
+- `verifyCoverFiWebhook` for HMAC webhook verification.
+- Typed quote, draft, metrics, and webhook event models.
+
+Use the modern SDK for new integrations unless you are testing a legacy route specifically.
+
+## Webhook events
+
+Supported event names:
+
+- `position.created`
+- `position.awaiting_oracle`
+- `position.settled`
+- `payout.claimed`
+- `principal.withdrawn`
+- `reserve.utilization_changed`
+- `oracle.stale`
+- `oracle.recovered`
+
+The migration creates `webhook_deliveries` for retry and dead-letter state. The `server/scripts/webhook-worker.js` worker delivers signed events and records retry or dead-letter status.
+
+Production hardening still needs strict webhook URL validation, unified SDK verification format, partner idempotency enforcement, and per-key rate limits before broad partner launch.

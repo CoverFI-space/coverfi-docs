@@ -35,10 +35,37 @@ The login page includes a short onboarding checklist and links to the Terms page
 | Portfolio | `/app/portfolio` | Live market view powered by CoinGecko data. |
 | Create Protection | `/app/protect` | Create a stablecoin protection position. |
 | Positions | `/app/positions` | Track, update, revoke, and review protection positions. |
-| Claims | `/app/claims` | Claim triggered payout positions. |
+| Claims | `/app/claims` | Settle expired positions, claim reserved payouts, and withdraw protected principal. |
 | Profile | `/app/profile` | Manage account profile and username. |
-| Pay Username | `/app/pay-username` | Resolve a CoverFi username to a wallet address. |
+| Pay Username | `/app/pay-username` | Resolve a CoverFi username, execute a wallet-signed Stellar payment, and optionally anchor a receipt hash. |
 | CoverFi AI | `/app/ai-chat` | Ask product, portfolio, research, and payment-draft questions. |
+
+## Username payment flow
+
+The **Pay Username** page is an executed Stellar payment flow. It is not only a payment draft.
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant A as App
+  participant R as Username registry
+  participant W as Wallet
+  participant S as Stellar network
+  participant P as Receipt registry
+
+  U->>A: Enter username, asset, and amount
+  A->>R: get_address(username)
+  R-->>A: Recipient wallet address
+  A->>W: Request payment signature
+  W-->>A: Signed transaction
+  A->>S: Submit payment
+  S-->>A: Confirm transaction hash
+  A->>P: Optional create_receipt()
+```
+
+The app resolves the recipient through the Soroban `username_registry`, builds a Stellar payment operation, asks the user's wallet to sign, submits the signed transaction, and polls for confirmation. After the payment succeeds, the app can anchor a receipt hash through the Soroban `receipt_registry`.
+
+Private receipt notes and local payment history stay in wallet-unlocked encrypted browser storage. The receipt registry stores hashes and access state, not raw private payment notes.
 
 ## Protection flow
 
@@ -59,6 +86,8 @@ When submitted, the app estimates:
 - Potential payout
 
 If Soroban configuration is present, the app can create the protection position on-chain through the configured protection engine contract.
+
+After expiry, the app identifies positions that need settlement. Settlement is permissionless, while payout claims and principal withdrawals are owner-only wallet-signed actions. Private profile, payment, receipt, draft, and AI records are stored in wallet-unlocked encrypted IndexedDB rather than a backend product database.
 
 ## Sidebar and layout
 

@@ -14,13 +14,16 @@ Protection is not insurance. Payouts are not guaranteed. Every important action 
     Learn the exact app flow from wallet connection to protection, payments, and receipts.
   </Card>
   <Card title="I am learning the terms" icon="book-open" href="/concepts">
-    Understand reserves, premiums, liquidity, basis points, oracle data, claims, and epochs.
+    Understand reserves, premiums, liquidity, basis points, oracle data, settlement, and claims.
   </Card>
   <Card title="I am reviewing CoverFi" icon="clipboard-check" href="/reviewer-guide">
     See the SCF/reviewer summary, proof checklist, limitations, and milestone plan.
   </Card>
   <Card title="I am evaluating the architecture" icon="chart-line" href="/investor-architecture">
     Review the combined product, protocol, operations, and ledger transparency architecture.
+  </Card>
+  <Card title="Technical architecture" icon="diagram-project" href="/technical-architecture">
+    Review the current Stellar, Soroban, backend, username payment, receipt, and verification architecture.
   </Card>
   <Card title="CoverFi app" icon="shield-check" href="/app">
     Learn the dashboard routes, protection flow, username payments, and mobile behavior.
@@ -48,7 +51,7 @@ flowchart LR
   C --> D[Review premium and payout cap]
   D --> E[Sign transaction]
   E --> F[Track position]
-  F --> G[Claim only if oracle and reserve rules allow]
+  F --> G[Settle at expiry, then claim only if rules allow]
 ```
 
 CoverFi is split into a public website, authenticated app, backend API, protocol monitor, research library, docs site, and Soroban contract workspace.

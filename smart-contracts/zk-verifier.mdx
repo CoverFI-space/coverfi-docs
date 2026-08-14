@@ -1,0 +1,36 @@
+---
+title: "ZK Verifier"
+description: "Proof-status registry for circuit metadata and verified subject records"
+---
+
+The `zk_verifier` stores circuit metadata and proof-status records. It is currently used as a proof-status registry for backend-verified or wallet-recorded proof events. Circuit scaffolds live under `circuits` and should not be presented as production ZK verification until verifier artifacts are complete and audited.
+
+## Responsibilities
+
+- Register circuit IDs with verifier hashes and kind hashes.
+- Enable or disable registered verifier metadata.
+- Let subjects record proof metadata from their own wallet.
+- Let an admin record backend-verified proof-status attestations.
+- Expose whether a subject has an admin-verified proof for a circuit.
+
+## Main methods
+
+```txt
+initialize(admin)
+register_verifier(admin, circuit_id, verifier_hash, kind_hash, enabled)
+set_verifier_enabled(admin, circuit_id, enabled)
+record_proof(subject, circuit_id, commitment, public_inputs_hash, proof_hash, verifier_hash)
+admin_record_proof(admin, subject, circuit_id, commitment, public_inputs_hash, proof_hash, verifier_hash)
+verify_bn254_pairing(subject, circuit_id, commitment, public_inputs_hash, proof_hash, verifier_hash, g1_points, g2_points)
+has_verified(subject, circuit_id)
+get_subject_proof_id(subject, circuit_id)
+get_proof(proof_id)
+```
+
+## Important distinction
+
+`record_proof` stores a subject proof record, but it does not mark the proof as verified for compliance gates. `admin_record_proof` stores a verified subject proof. The protection engine checks `has_verified` for high-value MFA and KYC proof-status requirements.
+
+## Production note
+
+Do not describe this layer as fully deployed private ZK verification until circuit artifacts, verifier keys, backend verification, on-chain checks, and audit evidence are published.

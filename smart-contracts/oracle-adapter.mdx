@@ -1,20 +1,55 @@
 ---
 title: "Oracle Adapter"
-description: "Ingests and stores live stablecoin price feeds"
+description: "Stores price observations, freshness rules, fallback submissions, and expiry reads"
 ---
 
-The `oracle_adapter` is a specialized contract responsible for managing external market data securely. The protection engine relies entirely on this data to determine if a claim is valid.
+The `oracle_adapter` stores price observations used by the protection, payment lock, and floor shield flows. The protection engine relies on this data for entry quotes and expiry settlement.
+
+The adapter can read from a source contract such as `quorum_oracle_source`, and it also supports a configured fallback-publisher path for Testnet or controlled deployments.
 
 ## Core Responsibilities
 
-- **Price Storage**: Stores the most recent scaled price (typically up to 7 or 8 decimals) of supported assets (e.g., USDC, USDT, DAI).
-- **Admin Authentication**: Only the protocol admin or a heavily permissioned oracle bot can update the prices.
-- **Data Availability**: Exposes a secure getter function so the `protection_engine` can read the price at the exact moment a user attempts to claim a position.
+- **Observation storage**: Stores recent price and timestamp observations per asset.
+- **Freshness checks**: Exposes a getter that returns only observations inside the configured freshness window.
+- **Expiry settlement reads**: Lets engines read the latest observation at or before an expiry timestamp, bounded by maximum age.
+- **Deviation checks**: Rejects a new observation if it moves beyond the configured deviation threshold from the previous stored observation.
+- **Fallback quorum path**: Accepts publisher submissions and stores a fallback observation after at least two configured publishers submit the same price for the same asset and timestamp.
+- **Volatility signal**: Exposes a simple volatility basis-point value based on the stored observation window.
 
 ## Key Functions
 
-### `update_price()`
-Called by an authorized external bot or admin to feed the latest stablecoin prices into the Soroban state.
+### `refresh(asset)`
 
-### `get_price()`
-Retrieves the current scaled price for a specific asset, used during the validation phase of a claim.
+Reads the latest source price, normalizes it to the target decimals, and stores a new observation if it passes timestamp and deviation checks.
+
+### `refresh_at(asset, timestamp)`
+
+Reads a source price at a requested timestamp and stores it if valid.
+
+### `submit_fallback(publisher, asset, price, timestamp)`
+
+Lets an approved fallback publisher submit a price. The adapter stores the observation after two configured publishers match the same price for the same asset and timestamp.
+
+### `get_latest(asset)`
+
+Returns the latest stored observation, even if it is no longer fresh.
+
+### `get_fresh_price(asset)`
+
+Returns the latest observation only when it is inside `max_age_seconds`.
+
+### `get_price_at_or_before(asset, timestamp, max_age_seconds)`
+
+Returns the newest stored observation whose timestamp is less than or equal to the requested timestamp and not older than the requested age window.
+
+### `get_volatility_bps(asset)`
+
+Returns a basis-point movement across the stored observation window. The protection engine uses this as one quote input.
+
+### `configure_publishers(...)`
+
+Admin function that sets the fallback publishers and enables or disables fallback mode.
+
+## Production notes
+
+Testnet can use controlled publishers for smoke tests and reviewer demos. Mainnet should use a documented multi-source or established Stellar-compatible oracle policy, with monitoring and emergency response procedures.

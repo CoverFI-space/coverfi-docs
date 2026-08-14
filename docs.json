@@ -24,6 +24,7 @@
           "getting-started",
           "concepts",
           "reviewer-guide",
+          "technical-architecture",
           "investor-architecture"
         ]
       },
@@ -33,6 +34,7 @@
           "security-trust",
           "economics",
           "backend-operations",
+          "partner-sandbox",
           "legal"
         ]
       },
@@ -50,12 +52,16 @@
           "smart-contracts/overview",
           "smart-contracts/architecture",
           "smart-contracts/protection-engine",
-          "smart-contracts/protected-balance-vault",
-          "smart-contracts/reserve-vault",
-          "smart-contracts/oracle-adapter",
-          "smart-contracts/receipt-registry",
-          "smart-contracts/registries",
-          "smart-contracts/deployment"
+            "smart-contracts/protected-balance-vault",
+            "smart-contracts/reserve-vault",
+            "smart-contracts/oracle-adapter",
+            "smart-contracts/quorum-oracle-source",
+            "smart-contracts/receipt-registry",
+            "smart-contracts/registries",
+            "smart-contracts/payment-lock-engine",
+            "smart-contracts/floor-shield-engine",
+            "smart-contracts/zk-verifier",
+            "smart-contracts/deployment"
         ]
       }
     ]

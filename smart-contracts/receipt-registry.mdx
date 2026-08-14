@@ -8,8 +8,8 @@ The `receipt_registry` contract combines the previous receipt-related contracts 
 It handles:
 
 - Payment receipt proof metadata.
-- Duplicate payment transaction hash rejection.
-- Sent and received receipt indexes.
+- Duplicate receipt hash rejection.
+- Owner receipt indexes.
 - Receipt hash verification.
 - Receipt access grants and revocations.
 - Batch anchor records.
@@ -31,26 +31,31 @@ That keeps custody, reserve accounting, and oracle trust boundaries easier to re
 ## Main methods
 
 ```txt
-initialize(admin)
-create_receipt(sender, receiver, payment_tx_hash, receipt_hash, encrypted_receipt_uri)
+initialize(admin, fee_token, treasury, automation)
+create_receipt(owner, receipt_hash, reference_hash)
 get_receipt(receipt_id)
-get_receipt_id_for_payment_hash(payment_tx_hash)
-get_sent_receipts(sender)
-get_received_receipts(receiver)
+get_receipt_id_for_hash(receipt_hash)
+get_owner_receipts(owner)
 verify_receipt(receipt_id, receipt_hash)
 is_receipt_party(receipt_id, user)
 grant_access(caller, receipt_id, viewer)
 revoke_access(caller, receipt_id, viewer)
 has_access(receipt_id, viewer)
-anchor_batch(admin, merkle_root, receipt_count)
+anchor_batch(merchant, merkle_root, receipt_count)
 open_dispute(user, receipt_id, reason_hash)
 respond_dispute(user, dispute_id, response_hash)
 resolve_dispute(admin, dispute_id, result)
 ```
 
+## Paid receipt printing
+
+Username payments complete first. A wallet-signed receipt transaction is optional and should be shown only after payment success. The app gives users a 10-minute print window; if they click Print receipt, `create_receipt()` charges the receipt fee and anchors the receipt hash on-chain.
+
+For the current MVP, receipt fees route 100% to the configured treasury wallet. No automation split is taken from individual receipt-print fees.
+
 ## Security notes
 
 - Sender authorization is required to create a receipt.
-- Sender or receiver authorization is required to mark a receipt disputed or manage receipt access.
-- Admin authorization is required for batch anchors and dispute resolution.
+- Owner authorization is required to create a receipt, mark it disputed, or manage receipt access.
+- Admin authorization is required for dispute resolution.
 - Receipt metadata is proof-oriented. It should not store raw private payment notes.
