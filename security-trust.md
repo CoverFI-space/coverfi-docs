@@ -3,6 +3,9 @@ title: "Security & trust model"
 description: "Threat model, operational policies, and audit readiness for CoverFi"
 ---
 
+> Historical broader-product documentation. This page is not evidence of the current funded scope, public source completeness, an audited release, or a verified deployment. The [8 November 2026 scope](/funding-scope) and [reviewer guide](/reviewer-guide) take precedence for the revised proposal.
+
+
 CoverFi is beta software. This page defines the security posture reviewers should evaluate before mainnet use.
 
 ## Trust boundaries

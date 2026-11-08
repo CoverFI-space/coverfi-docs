@@ -3,6 +3,9 @@ title: "Partner sandbox"
 description: "Optional PostgreSQL-backed partner, analytics, API-key, and webhook foundation"
 ---
 
+> Historical broader-product documentation. This page is not evidence of the current funded scope, public source completeness, an audited release, or a verified deployment. The [8 November 2026 scope](/funding-scope) and [reviewer guide](/reviewer-guide) take precedence for the revised proposal.
+
+
 CoverFi partner sandbox support is optional. The main app and contract flows do not require it. When `DATABASE_URL` is configured, the backend can store rebuildable analytics aggregates, partner records, app records, API-key hashes, webhook registrations, protected invoices, and delivery state.
 
 New integrations should start with the modern `/api/partner/v1/*` API and `packages/coverfi-sdk`. The older `/api/partners/*` API and `partner-sdk` are retained for compatibility while the partner surface is consolidated.

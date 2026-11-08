@@ -1,125 +1,42 @@
 ---
 title: "Economics model"
-description: "How fees, reserves, capacity, and payouts are modeled in CoverFi"
+description: "Prototype parameters and one-market pricing limitations"
 ---
 
-The CoverFi economics model is designed around visible fees, capped payout exposure, and reserve capacity accounting.
+# One-market business and sustainability plan
 
-## Core formula
+Planning draft, 8 November 2026. No paid mainnet activity, contracted recurring revenue or validated underwriting price is claimed.
 
-For a protected amount `A`, entry price `E`, expiry settlement price `P`, risk premium `R`, and maximum payout cap `C`:
+## Customer and product
 
-```txt
-premium_fee = quote_position(...).total_due
-raw_loss = A * max(0, (E - P) / E)
-max_payout = A * C
-final_payout = min(raw_loss, max_payout)
-```
+Validate one short-duration USDC testnet depeg protection market with Stellar wallet users and one distribution partner. The buyer sees the reference price, expiry, payout cap, full premium and settlement rules before signing. This is expiry-price protection: a temporary depeg that recovers before expiry may produce no payout. It does not compensate every loss or track the worst price during the term.
 
-Example:
+The funded primitive is the protection engine and reserve vault, with only necessary principal custody and price-feed support. Username payments, receipts, payment locks, floor shields, ZK verification, partner invoice APIs and AI assistants are excluded from the funding deliverables.
 
-| Input | Value |
-| --- | --- |
-| Protected amount | `1,000 USDC` |
-| Premium rate | `1.00%` for 7 days |
-| Entry price captured at creation | `1.00` |
-| Expiry settlement price | `0.94` |
-| Max payout cap | `10%` |
+## Pricing and revenue
 
-```txt
-premium_fee = 1,000 * 0.01 = 10 USDC
-raw_loss = 1,000 * ((1.00 - 0.94) / 1.00) = 60 USDC
-max_payout = 1,000 * 0.10 = 100 USDC
-final_payout = min(60, 100) = 60 USDC
-```
+The current public source has duration base rates of 30/100/150/250 basis points for up to 1/7/14/30 days, plus volatility, utilization, concentration and safety adjustments, a minimum/cap and fixed automation charge. These are prototype parameters, not actuarially validated depeg prices. A 1% seven-day base rate is not the final all-in quote. The quote returned by the selected release must be tested and disclosed in token units.
 
-## Reserve capacity and position-specific payouts
+The public reserve source defaults to 78% of risk premium for underwriting, 12% for protocol treasury, 7% for safety, and the 3% remainder plus the fixed charge for automation. Partner rewards, when configured, come from the protocol portion. Validate the actual release and on-chain settings before quoting these as deployed terms.
 
-Every active position locks the maximum payout amount from available reserve capacity. This prevents the app from accepting more exposure than the reserve can support.
+Illustrative revenue only: USD 100,000 of monthly protected notional at an assumed 1% risk premium generates USD 1,000 of premium and USD 120 gross protocol fees at a 12% share, before partner rewards and operating costs. That volume does not fund a team. At an assumed USD 2,000 monthly operating cost, the same assumptions require about USD 1.67 million monthly protected notional before partner rewards. These are sensitivity assumptions, not sales forecasts or approved operating budgets.
 
-```mermaid
-flowchart LR
-  A[Total assets] --> B[Locked liabilities]
-  A --> C[Reserved claims]
-  A --> D[Available capacity]
-  D --> E[New positions]
-```
+## Reserve funding
 
-```txt
-provider_nav = total_assets
-  - locked_liabilities
-  - reserved_claims
-  - unearned_premiums
-  - safety_balance
-  - automation_balance
-```
+External LP capital supplies claim capacity; it is not protocol revenue. Publish each provider's permitted name, committed amount, asset, conditions and funding transaction separately. No verified LP commitments are currently published. Team-reported Stellar Build Delhi support of more than USD 1,000 is funding support, not automatically reserve capital.
 
-When a position settles with no payout, unused locked capacity is released. When a position settles with a payout, the full calculated payout is reserved for that position and the owner can claim it through the engine.
+Premium assigned to underwriting matures according to settlement rules. Paid claims reduce provider assets; premiums and new LP deposits replenish capacity. Publish reserve NAV, liabilities, claims, utilization, withdrawals and loss experience. Pause new sales when capacity is insufficient; never use new buyer principal as claim capital. Do not promise LP returns or treat grant funding as recurring income.
 
-Current V2 routing:
+## Payout denomination and oracle risk
 
-| Policy | Value |
-| --- | --- |
-| Underwriting | `7800` bps |
-| Protocol | `1000-1500` bps, default `1200` bps |
-| Safety | `700` bps |
-| Automation | Remainder plus fixed automation fee |
+If the protected coin and payout coin are both USDC, payout purchasing power falls during a USDC depeg. A nominal 60 USDC payout at USD 0.94 is worth USD 56.40. The legacy engine's price-difference formula assumes the quote currency and payout units align; using a depegging payout token requires explicit conversion semantics. The one-market release must resolve and test this before a pilot claims USD loss protection. A different settlement asset introduces its own issuer, liquidity and depeg risks. Publish the chosen specification and cap; do not silently switch assets.
 
-The protocol portion is transferred automatically to the configured treasury address during position creation. Approved partner rewards, when present, are paid from the protocol portion before the remaining protocol amount reaches treasury.
+The current local price path trusts an admin publisher; the older public source uses an adapter. Neither source presence nor a quorum contract proves independent deployed oracle operation. Freeze a source revision, disclose authority and backfill policy, and test missing/stale/manipulated observations. Price correctness and correlated losses remain risks even with maximum payouts collateralized.
 
-Reserve-provider withdrawals use shares, NAV, a cooldown queue, and available-liquidity checks. Locked liabilities, reserved claims, unearned premiums, safety funds, and automation funds are excluded.
+## Months 3 to 12
 
-## Example claim timeline
+- Months 1-3: complete the testnet pilot, measure quote-to-purchase conversion, user comprehension, settlement completion, cost per position, LP interest and partner demand. No real protection sales in this grant plan.
+- Months 4-6: assess pilot results and obtain specialist pricing/reserving review, independent security review, operational readiness and appropriate legal review before any real-value launch. No specialist team member is claimed as hired.
+- Months 7-12: consider a separately approved capped real-value pilot only if those gates and actual LP capital are met. Reinvest defined operating surplus in operations and, if approved and disclosed, protocol-owned reserve capital. Consider paid integration/support only after demonstrated demand; no enterprise contracts are claimed.
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant E as Engine
-  participant O as Oracle
-  participant R as Reserve
-
-  U->>E: Position reaches expiry
-  E->>O: Read latest valid price at or before expiry
-  E->>E: Calculate capped payout
-  U->>E: Claim payout
-  E->>R: Transfer reserved payout
-  U->>E: Withdraw protected principal
-```
-
-## Premium policy
-
-Premiums are non-refundable after a signed position is accepted. They compensate reserve liquidity providers and increase protocol reserves depending on deployment configuration.
-
-Current product premium schedule:
-
-| Duration | Premium |
-| --- | --- |
-| 1 day | `0.30%` |
-| 7 days | `1.00%` |
-| 14 days | `1.50%` |
-| 30 days | `2.50%` |
-
-Premium pricing should account for:
-
-- Asset volatility and historical depeg frequency.
-- Duration.
-- Entry price captured from the oracle at position creation.
-- Current reserve utilization.
-- Maximum payout cap.
-- Oracle confidence and feed freshness.
-
-## Risk controls
-
-The model should not go to production without:
-
-- Per-asset exposure limits.
-- Maximum position size per wallet.
-- Reserve utilization caps.
-- Oracle freshness checks.
-- Settlement, payout-claim, and principal-withdrawal monitoring.
-- Emergency pause procedures.
-- Published fee and payout examples.
-
-## What this is not
-
-CoverFi protection is not insurance, does not guarantee payout, and is not a promise that a user will be made whole. It is a smart-contract-based protection mechanism constrained by contract rules, reserve funding, oracle data, and network execution.
+If customers will not pay a price that covers risk and operations, or LPs will not accept the loss profile, stop expansion and publish findings. Track operating runway separately from restricted reserve capital. The proposed grant budget covers this pilot; ongoing support would require earned fees, confirmed service revenue or separately disclosed additional funding.

@@ -3,6 +3,9 @@ title: "Backend operations"
 description: "API hardening, health checks, privacy boundaries, and deployment notes"
 ---
 
+> Historical broader-product documentation. This page is not evidence of the current funded scope, public source completeness, an audited release, or a verified deployment. The [8 November 2026 scope](/funding-scope) and [reviewer guide](/reviewer-guide) take precedence for the revised proposal.
+
+
 The `server` workspace runs the Express API for market data, CoverFi AI, health checks, legal/privacy notices, status endpoints, partner APIs, protected invoices, webhooks, optional KYC/KYB hooks, and compatibility routes. Username ownership, username payment execution, protection creation, settlement, payout claims, principal withdrawal, payment resolution, and receipt anchoring are contract/client flows.
 
 The backend is not an authoritative product database. Private profile, payment, receipt, draft, and AI records live in wallet-unlocked encrypted browser storage. Protocol state lives on Stellar/Soroban.

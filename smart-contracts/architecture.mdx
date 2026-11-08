@@ -1,98 +1,35 @@
 ---
-title: "Architecture Diagrams"
-description: "Visual guide to CoverFi contract and app flows"
+title: "Funded architecture"
+description: "Minimal target release and current source differences"
 ---
 
-This page shows the main CoverFi flows as diagrams.
+# Focused funding scope
 
-## Contract map
+Proposed 12-week, USD 40,000 testnet project. Not an announced mainnet release.
 
-```mermaid
-flowchart TD
-  User[User Wallet]
-  Engine[Protection Engine]
-  Protected[Protected Balance Vault]
-  Reserve[Reserve Vault]
-  Oracle[Oracle Adapter]
-  Username[Username Registry]
-  Receipt[Receipt Registry]
+## One primitive and one market
 
-  User --> Engine
-  Engine --> Protected
-  Engine --> Reserve
-  Engine --> Oracle
-  User --> Username
-  User --> Receipt
-  Receipt -->|Access, anchors, disputes| Receipt
-```
+Build and validate a single USDC testnet price-protection market using protection_engine and reserve_vault. Include protected_balance_vault and a price-feed component only as required dependencies. Final asset contract, issuer, payout denomination, premium units and loss-conversion semantics must be specified and tested in milestone 1; same-token depeg payout cannot be advertised as a guaranteed USD make-whole.
 
-## Protection creation
+The public workspace currently has seven crates. It is legacy implementation input, not a completed minimal release. protection_engine currently references zk_verifier for high-value gating and oracle_adapter for prices. Removing proof gating from the funded release is planned work; optional dependencies are not magically removed by this scope document.
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant W as Wallet
-  participant E as Protection Engine
-  participant P as Protected Vault
-  participant R as Reserve Vault
-
-  U->>W: Approves protection transaction
-  W->>E: create_position()
-  E->>P: deposit_from()
-  E->>R: collect_premium_from()
-  E->>R: lock_payout_capacity()
-```
-
-## Expiry settlement and exit path
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant E as Protection Engine
-  participant O as Oracle Adapter
-  participant R as Reserve Vault
-
-  U->>E: settle_position(position)
-  E->>O: get_price_at_or_before(expiry)
-  E->>E: reject invalid or missing expiry observation
-  E->>R: settle_position(position, payout)
-  R->>R: release unused capacity or reserve full payout
-  U->>E: claim_payout(position)
-  E->>R: claim_payout()
-  U->>E: withdraw_principal(position)
-```
-
-## Username payment and receipt flow
+Excluded from the ask: username_registry, receipt_registry, payment_lock_engine, floor_shield_engine, zk_verifier, partner invoice API and AI assistant. Local-only or historical implementations are not claimed as public grant deliverables. A partner integration uses only the core protection lifecycle.
 
 ```mermaid
 flowchart LR
-  A[Sender enters username] --> B[Username Registry resolves address]
-  B --> C[Wallet signs Stellar payment]
-  C --> D[Stellar settles payment]
-  D --> E[Receipt Registry anchors proof]
-  E --> F[App stores wallet-local receipt history]
+  W[User wallet] --> E[Protection engine]
+  P[Price feed: policy to be frozen] --> E
+  E --> V[Principal custody vault]
+  E --> R[Reserve vault]
+  L[External reserve providers] --> R
 ```
 
-## Trust boundaries
+This diagram is the proposed funded release. It is not an attestation of a current deployment.
 
-```mermaid
-flowchart TD
-  Wallet[User wallet signs funds movement]
-  Contracts[Soroban contracts enforce protocol state]
-  Backend[Backend provides AI, market, support, and health APIs]
-  Oracle[Oracle publishes price and timestamp]
-  Admin[Admin can pause/update policy]
+## Outcomes
 
-  Wallet --> Contracts
-  Oracle --> Contracts
-  Admin --> Contracts
-  Backend -. does not sign user transactions .-> Wallet
-```
+- Weeks 1-3, USD 12,000: reproducible minimal release, denomination/settlement specification and reconciled testnet lifecycle.
+- Weeks 4-7, USD 16,000: target 10 third-party testers, 20 positions opened and settled, and two named conditional LP commitments totaling USD 10,000. No current commitments are claimed.
+- Weeks 8-12, USD 12,000: target one partner-owned live testnet integration, independent scoped technical review and a published go/no-go report.
 
-Important boundaries:
-
-- Backend cannot sign user transactions.
-- AI cannot move funds.
-- Oracle observations must be valid for entry quotes and expiry settlement.
-- Admin policy must be hardened before mainnet scale.
-- Reserve accounting prevents provider withdrawals from using locked liabilities or reserved claims.
+Targets are prospective; publish transaction evidence, named permitted commitments, actual metrics and shortfalls. See SCF_APPLICATION_REVISED.md for acceptance criteria and BUSINESS_PLAN.md for the model. The current team's underwriting experience gap remains explicit; no additional specialist member is claimed.

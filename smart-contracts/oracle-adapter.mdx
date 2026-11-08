@@ -3,6 +3,9 @@ title: "Oracle Adapter"
 description: "Stores price observations, freshness rules, fallback submissions, and expiry reads"
 ---
 
+> Historical broader-product documentation. This page is not evidence of the current funded scope, public source completeness, an audited release, or a verified deployment. The [8 November 2026 scope](/funding-scope) and [reviewer guide](/reviewer-guide) take precedence for the revised proposal.
+
+
 The `oracle_adapter` stores price observations used by the protection, payment lock, and floor shield flows. The protection engine relies on this data for entry quotes and expiry settlement.
 
 The adapter can read from a source contract such as `quorum_oracle_source`, and it also supports a configured fallback-publisher path for Testnet or controlled deployments.

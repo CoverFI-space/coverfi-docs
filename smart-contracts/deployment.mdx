@@ -1,184 +1,29 @@
 ---
-title: "Deployment & Testing"
-description: "How to deploy and test CoverFi contracts locally and on Testnet"
+title: "Deployment and verification"
+description: "Historical IDs are not a verified current release"
 ---
 
-## How to Test
+Mainnet is not recorded as deployed. The current revision does not attest live testnet state.
 
-The repository includes a comprehensive Rust test suite. From the root of the contracts workspace:
+Use the [public deployment registry](https://github.com/CoverFI-space/coverfi-contracts/blob/main/contracts.json). It preserves historical local IDs as unverified records. The former coverfi-space/coverfi registry URL is not used.
 
-```powershell
-cargo test
+The public [contracts workspace](https://github.com/CoverFI-space/coverfi-contracts) has seven crates. The proposed funding release is narrower; see [funding scope](/funding-scope). Do not assume current source implements historical deployed IDs.
+
+## Reproduce source checks
+
+From the contracts repository:
+
+```sh
+cargo test --workspace --locked
+cargo build --workspace --release --target wasm32v1-none --locked
 ```
 
-This will run the current Soroban workspace tests, validating protection math, reserve accounting, username registration and lookup, receipt anchoring, payment locks, floor shields, oracle behavior, and proof-status records.
+These are commands to run, not claims that they passed. Publish the current CI run, toolchain and commit. Historical test totals are not reused as current evidence.
 
-The latest full local verification ran:
+## Release evidence required
 
-```powershell
-cd D:\Stellar\coverfi-contracts
-cargo test
-```
+Publish source commit, WASM hashes, network, asset issuer/token contract, deployment and initialization transaction hashes, engine/vault references, admin and publisher policy, reserve seed/balances and verification ledger/time. A new registry entry is active only after quote, creation, expiry settlement, positive claim, no-payout exit and principal withdrawal pass against that release.
 
-The latest local result was `46` unit tests passing plus doctests. A full workspace run may require Windows Application Control to allow generated Rust test binaries on some machines.
+The proposed pilot must specify payout denomination and conversion during depeg. Simulation outcomes must be labeled. Grants, LP commitments, testnet seed and real capital are separate accounting categories. Missing expiry observations and privileged historical price publication require explicit policies and tests.
 
-## Current Testnet Deployment
-
-The current XLM-only Testnet IDs are published in `/contracts.json` and the associated deployment report. Mainnet is not deployed.
-
-The current workspace contains these contracts:
-
-- `protection_engine`
-- `reserve_vault`
-- `protected_balance_vault`
-- `oracle_adapter`
-- `quorum_oracle_source`
-- `username_registry`
-- `receipt_registry`
-- `zk_verifier`
-- `payment_lock_engine`
-- `floor_shield_engine`
-
-The initial Mainnet scope should stay limited to audited, launch-critical contracts. Experimental surfaces such as floor shield, payment lock, or proof-status flows should be promoted only after tests, docs, monitoring, and audit scope are ready.
-
-> Historical instructions later in this document reference the former CFTUSD, six-contract Testnet deployment. Do not use those values or commands for the current XLM deployment or Mainnet. Use `/contracts.json`, this page, and any current deployment runbook in `coverfi-contracts`.
-
-If the app shows Protect as unavailable on Testnet, verify the configured IDs before changing frontend quote logic or position amounts:
-
-```powershell
-npm --prefix server run diagnose:protection
-```
-
-The expected failure mode for the old public Testnet IDs is:
-
-- `engine.quote_position` fails with `MissingValue`, meaning the deployed engine does not expose the V2 quote ABI.
-- `reserve.get_pool`, `reserve.get_projected_utilization_bps`, and `reserve.get_projected_concentration_bps` fail with `MissingValue`, meaning the deployed reserve does not expose the V2 reserve ABI.
-- `engine.create_position` fails before wallet signing, so this is not a user wallet, amount, Freighter, or frontend bug.
-
-When this happens, `/api/status/reserve` should return `ok: false` with `status: "legacy_mismatch"` instead of HTTP 502. The only protocol fix is a fresh V2 deploy, initialization, reserve funding, and smoke test.
-
-Do not promote a contract ID from a legacy or experimental section into the active Testnet section until the deployment workflow has:
-
-- built and hashed every required WASM,
-- deployed and initialized the contracts,
-- configured engine, vault, oracle, asset, partner, proof-status, and keeper references where relevant,
-- seeded the selected Testnet reserve and automation balances,
-- executed smoke lifecycles for username payment, receipt anchoring, quote, protection creation, settlement, payout claim, and withdrawal,
-- written a deployment report with transaction IDs and WASM hashes.
-
-Recorded settings:
-
-- XLM reserve seed: re-check live state after each redeploy before publishing a demo script.
-- Oracle price: `100000000`.
-- Source protection engine fee logic: duration-based schedule (`30`, `100`, `150`, `250` bps for 1, 7, 14, and 30 day terms). Verify or redeploy the listed contract IDs before treating a deployment as enforcing the latest source.
-- Max payout: `1000` bps.
-- Max oracle age: `3600` seconds.
-- Reserve accounting: position-specific maximum payout locks, reserved claims, matured underwriting premium, safety balance, automation balance, provider shares, and withdrawal requests.
-
-## How to Deploy
-
-### Repairing the Current Testnet Protect Flow
-
-The current legacy Testnet IDs cannot be made V2-compatible by changing `.env` labels or lowering the protected amount. The engine and reserve must be redeployed together because they store each other's contract IDs and the current public reserve does not expose the methods used by the V2 UI.
-
-Required local inputs:
-
-| Input | Needed for | Notes |
-| --- | --- | --- |
-| Stellar CLI deployer identity | Contract deploy and invoke transactions | Testnet can use a dedicated local identity. Mainnet must use the production admin policy below. |
-| Admin public key | Contract initialization | Use the final admin key at initialization time. |
-| Treasury/reserve provider public key | Reserve initialization and deposit | Can be the same as admin on Testnet only, but should be separate in production. |
-| Test payout asset | Premium and payout token | Use a worthless Testnet asset such as `CFTUSD`; do not call it real USDC unless issued by the intended issuer. |
-| Reserve liquidity | `deposit_reserve` and `fund_automation` | The reserve provider must hold enough payout asset balance before funding. |
-| Oracle publisher keys or source contract | Fresh XLM price observations | Use fallback publishers for a simple Testnet setup if no external oracle source is ready. |
-
-Build from a trusted/developer path or CI runner:
-
-```powershell
-cd D:\Stellar\coverfi-contracts
-rustup target add wasm32v1-none
-cargo build --workspace --release --target wasm32v1-none
-```
-
-On some Windows machines, Application Control may block generated Rust build scripts with `os error 4551`. That is a host policy block. Move the repo to a developer-trusted path, allow generated build artifacts, or build in CI/WSL.
-
-Deploy the launch-critical WASMs with Stellar CLI. Add optional product contracts only when they are in scope for the deployment:
-
-```powershell
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/oracle_adapter.wasm
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/reserve_vault.wasm
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/protected_balance_vault.wasm
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/protection_engine.wasm
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/username_registry.wasm
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/receipt_registry.wasm
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/zk_verifier.wasm
-stellar contract deploy --source-account <deployer> --network testnet --wasm target/wasm32v1-none/release/quorum_oracle_source.wasm
-```
-
-Initialize in this order:
-
-1. `reserve_vault.initialize(admin, treasury)`.
-2. `oracle_adapter.initialize(admin, source, source_asset, source_decimals, max_age_seconds, max_deviation_bps)`.
-3. `oracle_adapter.configure_publishers(admin, publisher1, publisher2, publisher3, true)` if using fallback publisher quorum.
-4. `protected_balance_vault.initialize(admin, protection_engine)`.
-5. `protection_engine.initialize(admin, protected_balance_vault, reserve_vault, oracle_adapter, protected_asset, payout_asset, 1000, 3600)`.
-6. `reserve_vault.configure_protocol(admin, protection_engine, oracle_adapter)`.
-7. Initialize `username_registry`, `receipt_registry`, and `zk_verifier` with their current source-defined arguments.
-8. Initialize and configure `quorum_oracle_source` if it is part of the deployment.
-9. Fund the payout reserve with `reserve_vault.deposit_reserve(provider, payout_asset, amount, min_shares)`.
-10. Fund automation with `reserve_vault.fund_automation(provider, payout_asset, amount)`.
-11. Publish a fresh oracle observation for the protected XLM asset.
-
-After deployment, update `contracts.json`, run `node scripts/sync-contract-registry.js --write`, copy the new active IDs into the frontend/backend env, restart both apps, and run:
-
-```powershell
-npm --prefix server run diagnose:protection
-npm --prefix server run check
-npm --prefix logic-pages run build
-```
-
-Only publish the active Testnet IDs after diagnostics pass and end-to-end smoke tests cover username payment, receipt anchoring, quote, protection creation, settlement, payout claim, and principal withdrawal.
-
-## Production admin account policy
-
-Do not use a personal Freighter wallet, demo wallet, backend hot wallet, or reserve funder wallet as the production admin.
-
-Recommended account split:
-
-| Role | Purpose | Production recommendation |
-| --- | --- | --- |
-| Deployment source | Pays deployment fees and creates contract IDs | Dedicated deployer account with limited XLM, rotated after deployment |
-| Contract admin | Initializes contracts, pauses/unpauses, updates fee/oracle policy | Multisig or admin controller with hardware-backed signers |
-| Oracle updater | Publishes price updates to `oracle_adapter` | Separate operational key, later replaced by oracle provider/quorum design |
-| Reserve funder | Deposits reserve liquidity | Separate treasury/LP account, never reused as admin |
-| Backend signer | Signs backend sessions or service tasks | Server-side key only if required; never contract admin |
-
-For testnet, a single dedicated testnet admin is acceptable for speed. For mainnet, set the admin public key only after the team has chosen the multisig/admin-controller policy and documented signer custody. Publish the admin public key, deployment source, and contract IDs in the deployment record after verification.
-
-To deploy the contracts to the Stellar network, clone the [coverfi-contracts repository](https://github.com/coverfi-space) and use the Stellar CLI.
-
-1. **Build the WASM contracts:**
-```powershell
-rustup target add wasm32v1-none
-cargo build --release --target wasm32v1-none
-```
-
-2. **Deploy to Testnet:**
-```powershell
-soroban contract deploy \
-  --wasm target/wasm32v1-none/release/protection_engine.wasm \
-  --source admin \
-  --network testnet
-```
-Repeat the deployment step for the launch-critical workspace contracts, then configure their cross-contract initialization. If the reserve vault or engine ABI changes, redeploy the whole protection suite because the engine and vaults store each other's contract IDs.
-
-## Security Notes
-
-> [!WARNING]  
-> **Audit Status**: These contracts are currently in beta and have not undergone a formal security audit. Use at your own risk.
-
-- **Oracle Dependency**: The engine rejects stale oracle data, but the system still relies on updater quality and monitoring.
-- **Reserve Payouts**: Claims use position-specific reserved payout accounting. The owner can claim the settled amount once, and withdrawals cannot consume active collateral or restricted balances.
-- **Deployment Drift**: Source changes do not affect existing contract IDs until rebuilt, redeployed, initialized, and verified.
-- **Reentrancy**: State changes occur before external cross-contract token transfers to prevent reentrancy attacks.
-- **Access Control**: Critical functions like price updates and contract upgrades must be protected by admin authentication, preferably multisig in production.
+No new mainnet or testnet deployment was performed as part of this documentation revision. No independent audit is claimed.
