@@ -24,7 +24,13 @@
           "funding-scope",
           "reviewer-guide",
           "business-plan",
-          "ai-disclosure"
+          "ai-disclosure",
+          "budget",
+          "team-risk-profile",
+          "pilot-plan",
+          "monitoring-plan",
+          "submission-requirements",
+          "market-positioning"
         ]
       },
       {
@@ -35,7 +41,8 @@
           "smart-contracts/deployment",
           "testnet-release",
           "threat-model",
-          "testnet-deployment"
+          "testnet-deployment",
+          "security-readiness"
         ]
       }
     ]
