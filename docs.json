@@ -32,7 +32,9 @@
         "pages": [
           "smart-contracts/overview",
           "smart-contracts/architecture",
-          "smart-contracts/deployment"
+          "smart-contracts/deployment",
+          "testnet-release",
+          "threat-model"
         ]
       }
     ]

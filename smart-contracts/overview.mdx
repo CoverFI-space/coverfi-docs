@@ -5,6 +5,6 @@ description: "Public source inventory and the one-market target"
 
 The [public Cargo workspace](https://github.com/CoverFI-space/coverfi-contracts/blob/main/Cargo.toml) contains seven crates: protection_engine, reserve_vault, protected_balance_vault, oracle_adapter, username_registry, receipt_registry and zk_verifier.
 
-The funded target is one USDC testnet market centered on the protection engine and reserve vault. Necessary custody and price support are dependencies; unrelated products are excluded. The existing engine still has optional proof gating, which must be removed from the funded release. See [funding scope](/funding-scope).
+The funded target is one USDC testnet market centered on the protection engine and reserve vault. Necessary custody and price support are dependencies; unrelated products are excluded. The default release contains four contracts; the engine has no proof-gating dependency. The other three public crates remain legacy source outside the pilot. See [funding scope](/funding-scope).
 
 Quorum oracle source, payment lock and floor shield exist in a separate local workspace, but are not in this public release. Legacy descriptions of them are not public source or deployment evidence. Mainnet is not recorded as deployed. [Verification requirements](/smart-contracts/deployment).
