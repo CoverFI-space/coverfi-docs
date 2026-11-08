@@ -34,7 +34,8 @@
           "smart-contracts/architecture",
           "smart-contracts/deployment",
           "testnet-release",
-          "threat-model"
+          "threat-model",
+          "testnet-deployment"
         ]
       }
     ]
